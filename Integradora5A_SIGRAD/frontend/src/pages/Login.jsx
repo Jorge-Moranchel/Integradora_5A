@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom'; // 1. Importamos el navegante
 import { Mail, Lock } from 'lucide-react';
-import '../style/Login.css';
+import '../Style/Login.css';
 
 export default function Login() {
   const [email, setEmail] = useState('');
