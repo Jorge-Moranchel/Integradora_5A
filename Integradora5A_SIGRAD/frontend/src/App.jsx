@@ -1,121 +1,78 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { LayoutDashboard, MapPin, Users, History } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
 
-function App() {
-  const [count, setCount] = useState(0)
+// Importación de Páginas
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Areas from './pages/Areas';
+import Usuarios from './pages/Usuarios';
+import Historial from './pages/Historial';
 
+// Componente para organizar el Layout con Sidebar
+function AdminLayout({ children }) {
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="d-flex">
+      {/* SIDEBAR FIXED */}
+      <div className="sidebar-container">
+        <div className="p-4">
+          <h4 className="fw-bold m-0 text-white">Reserva Deportiva</h4>
+          <small className="text-muted">Panel de Administración</small>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
 
-      <div className="ticks"></div>
+        <nav className="mt-4">
+          <NavLink to="/dashboard" className={({ isActive }) => isActive ? "nav-link-custom active" : "nav-link-custom"}>
+            <LayoutDashboard size={20} /> Dashboard
+          </NavLink>
+          <NavLink to="/areas" className={({ isActive }) => isActive ? "nav-link-custom active" : "nav-link-custom"}>
+            <MapPin size={20} /> Áreas deportivas
+          </NavLink>
+          <NavLink to="/usuarios" className={({ isActive }) => isActive ? "nav-link-custom active" : "nav-link-custom"}>
+            <Users size={20} /> Usuarios
+          </NavLink>
+          <NavLink to="/historial" className={({ isActive }) => isActive ? "nav-link-custom active" : "nav-link-custom"}>
+            <History size={20} /> Historial
+          </NavLink>
+        </nav>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+        <div className="position-absolute bottom-0 w-100 p-4 border-top border-secondary">
+          <div className="d-flex align-items-center gap-2">
+            <div className="bg-secondary rounded-circle p-2 px-3 fw-bold text-white">AD</div>
+            <div>
+              <p className="m-0 small fw-bold text-white">Administrador</p>
+              <p className="m-0 text-muted" style={{ fontSize: '11px' }}>admin@utez.edu.mx</p>
+            </div>
+          </div>
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      </div>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      {/* CONTENIDO PRINCIPAL */}
+      <div style={{ marginLeft: '280px', width: '100%', minHeight: '100vh' }} className="p-5">
+        {children}
+      </div>
+    </div>
+  );
 }
 
-export default App
+function App() {
+  return (
+    <Router>
+      <Routes>
+        {/* Ruta de Login: Sin Sidebar */}
+        <Route path="/login" element={<Login />} />
+
+        {/* Rutas de Administración: Con Sidebar */}
+        <Route path="/dashboard" element={<AdminLayout><Dashboard /></AdminLayout>} />
+        <Route path="/areas" element={<AdminLayout><Areas /></AdminLayout>} />
+        <Route path="/usuarios" element={<AdminLayout><Usuarios /></AdminLayout>} />
+        <Route path="/historial" element={<AdminLayout><Historial /></AdminLayout>} />
+
+        {/* Redirección por defecto al Login */}
+        <Route path="*" element={<Navigate to="/login" />} />
+      </Routes>
+    </Router>
+  );
+}
+
+export default App;
