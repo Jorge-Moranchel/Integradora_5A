@@ -1,0 +1,13 @@
+# Carpetas de configuración del IDE
+.idea/
+.vscode/
+
+# Dependencias (NO las subas nunca)
+node_modules/
+target/
+build/
+
+# Logs y archivos temporales
+*.log
+npm-debug.log*
+.DS_Store
