@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, MapPin, Users, History } from 'lucide-react';
+import { LayoutDashboard, MapPin, Users, History, BookOpen, ShieldCheck } from 'lucide-react';
 
 export default function Sidebar() {
     return (
@@ -34,6 +34,17 @@ export default function Sidebar() {
                     </div>
                 </div>
             </div>
+            <div className="mt-3 px-3">
+                <small className="text-uppercase text-muted fw-bold" style={{fontSize: '0.7rem'}}>Catálogos</small>
+            </div>
+
+            <NavLink to="/catalogos/carreras" className={({isActive}) => isActive ? "nav-link-custom active" : "nav-link-custom"}>
+                <BookOpen size={20}/> Carreras
+            </NavLink>
+
+            <NavLink to="/catalogos/roles" className={({isActive}) => isActive ? "nav-link-custom active" : "nav-link-custom"}>
+                <ShieldCheck size={20}/> Roles
+            </NavLink>
         </div>
     );
 }
