@@ -10,7 +10,8 @@ export default function Carreras() {
 
     return (
         <div>
-            <h2 className="text-white">Administración de Roles</h2>
+            <h2 className="fw-bold mb-1 text-dark">Administración de Roles</h2>
+            <p className="text-muted small">Gestiona los roles con las que los nuevos usuarios pueden seleccionar para registrarse</p>
             <button className="btn btn-primary my-3">Nuevo Rol</button>
             <table className="table table-dark table-hover">
                 <thead>

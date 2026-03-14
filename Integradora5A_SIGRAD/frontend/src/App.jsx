@@ -38,7 +38,7 @@ function AdminLayout({ children }) {
 
                     {/* Sección de Catálogos */}
                     <div className="mt-4 px-4">
-                        <small className="text-muted text-uppercase fw-bold" style={{ fontSize: '0.7rem' }}>Catálogos</small>
+                        <small className="text-muted text-uppercase fw-bold" style={{ fontSize: '0.7rem'}}>Catálogos</small>
                     </div>
                     <NavLink to="/catalogos/carreras" className={({ isActive }) => isActive ? "nav-link-custom active" : "nav-link-custom"}>
                         <BookOpen size={20} /> Carreras
