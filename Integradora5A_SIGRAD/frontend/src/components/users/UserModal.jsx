@@ -1,100 +1,146 @@
-import React from 'react';
-import { UserPlus, X, EyeOff } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { UserPlus, EyeOff, Eye, Save } from 'lucide-react';
+import Swal from 'sweetalert2';
 
-export default function UserModal({ show, onClose }) {
+export default function UserModal({ show, onClose, userToEdit }) {
+  const [nombre, setNombre] = useState('');
+  const [matricula, setMatricula] = useState('');
+  const [telefono, setTelefono] = useState('');
+  const [email, setEmail] = useState('');
+  const [carrera, setCarrera] = useState('');
+  const [rol, setRol] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPass, setShowPass] = useState(false);
+
+  const [listaCarreras, setListaCarreras] = useState([]);
+  const [listaRoles, setListaRoles] = useState([]);
+
+  useEffect(() => {
+    if (show) {
+      cargarCatalogos();
+      if (userToEdit) {
+        setNombre(userToEdit.nombre);
+        setMatricula(userToEdit.matricula);
+        setTelefono(userToEdit.telefono || '');
+        setEmail(userToEdit.emailInstitucional);
+        setCarrera(userToEdit.carrera || '');
+        setRol(userToEdit.rol || '');
+        setPassword(''); // Por seguridad no cargamos la contraseña
+      } else {
+        limpiarCampos();
+      }
+    }
+  }, [show, userToEdit]);
+
+  const cargarCatalogos = async () => {
+    try {
+      const [resC, resR] = await Promise.all([
+        fetch('http://localhost:8080/api/carreras/listar'),
+        fetch('http://localhost:8080/api/roles')
+      ]);
+      setListaCarreras(await resC.json());
+      setListaRoles(await resR.json());
+    } catch (e) { console.error(e); }
+  };
+
+  const limpiarCampos = () => {
+    setNombre(''); setMatricula(''); setTelefono(''); setEmail('');
+    setCarrera(''); setRol(''); setPassword('');
+  };
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    const url = userToEdit ? `http://localhost:8080/api/usuarios/actualizar/${userToEdit.id}` : 'http://localhost:8080/api/usuarios/registrar';
+    const method = userToEdit ? 'PUT' : 'POST';
+
+    try {
+      const response = await fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre, matricula, telefono, carrera,
+          emailInstitucional: email,
+          contrasena: password,
+          rol
+        }),
+      });
+
+      if (response.ok) {
+        Swal.fire('¡Éxito!', userToEdit ? 'Usuario actualizado' : 'Usuario registrado', 'success');
+        onClose();
+      } else {
+        const data = await response.json();
+        Swal.fire('Error', data.message, 'error');
+      }
+    } catch (error) { Swal.fire('Error', 'Backend no responde', 'error'); }
+  };
+
   if (!show) return null;
 
   return (
-    <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
-      <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-        <div className="modal-content border-0 shadow-lg rounded-4">
-          
-          {/* Header del Modal */}
-          <div className="modal-header border-0 p-4 pb-0">
-            <div className="d-flex align-items-center gap-2">
-              <div className="bg-success-subtle p-2 rounded-circle text-success d-flex align-items-center justify-content-center">
-                <UserPlus size={24} />
-              </div>
-              <h4 className="modal-title fw-bold">Registrar Nuevo Usuario</h4>
+      <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
+        <div className="modal-dialog modal-lg modal-dialog-centered">
+          <div className="modal-content border-0 shadow-lg rounded-4 text-dark">
+            <div className="modal-header border-0 p-4 pb-0">
+              <h4 className="fw-bold">
+                {userToEdit ? <Save className="me-2 text-primary"/> : <UserPlus className="me-2 text-success"/>}
+                {userToEdit ? 'Editar Usuario' : 'Registrar Nuevo Usuario'}
+              </h4>
+              <button type="button" className="btn-close" onClick={onClose}></button>
             </div>
-            <button type="button" className="btn-close shadow-none" onClick={onClose}></button>
-          </div>
-
-          <div className="modal-body p-4">
-            {/* Sección: Información Personal */}
-            <h6 className="fw-bold mb-3 border-bottom pb-2">Información Personal</h6>
-            <div className="mb-4">
-              <label className="form-label small fw-semibold">Nombre Completo <span className="text-danger">*</span></label>
-              <input type="text" className="form-control bg-light border-0 py-2" placeholder="Ej: Juan Pérez García" />
-            </div>
-
-            <div className="row mb-4">
-              <div className="col-md-6">
-                <label className="form-label small fw-semibold">Matrícula <span className="text-danger">*</span></label>
-                <input type="text" className="form-control bg-light border-0 py-2" placeholder="Ej: E2024001 o D2024001" />
+            <div className="modal-body p-4">
+              <div className="mb-3">
+                <label className="form-label small fw-bold">Nombre Completo *</label>
+                <input type="text" className="form-control bg-light border-0" value={nombre} onChange={(e)=>setNombre(e.target.value)} required />
               </div>
-              <div className="col-md-6">
-                <label className="form-label small fw-semibold">Teléfono <span className="text-danger">*</span></label>
-                <input type="text" className="form-control bg-light border-0 py-2" placeholder="Ej: +54 11 1234-5678" />
-              </div>
-            </div>
-
-            {/* Sección: Información Académica */}
-            <h6 className="fw-bold mb-3 border-bottom pb-2">Información Académica</h6>
-            <div className="row mb-4">
-              <div className="col-md-6">
-                <label className="form-label small fw-semibold">Correo Institucional <span className="text-danger">*</span></label>
-                <input type="email" className="form-control bg-light border-0 py-2" placeholder="Ej: usuario@institucion.edu" />
-              </div>
-              <div className="col-md-6">
-                <label className="form-label small fw-semibold">Carrera <span className="text-danger">*</span></label>
-                <select className="form-select bg-light border-0 py-2 text-muted">
-                  <option>Seleccionar carrera...</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="row mb-3">
-              <div className="col-md-6">
-                <label className="form-label small fw-semibold">Rol <span className="text-danger">*</span></label>
-                <select className="form-select bg-light border-0 py-2">
-                  <option>Estudiante</option>
-                  <option>Docente</option>
-                  <option>Administrador</option>
-                </select>
-              </div>
-              <div className="col-md-6">
-                <label className="form-label small fw-semibold">Contraseña <span className="text-danger">*</span></label>
-                <div className="input-group">
-                  <input type="password" disable className="form-control bg-light border-0 py-2" placeholder="Mínimo 8 caracteres" />
-                  <span className="input-group-text bg-light border-0 text-muted"><EyeOff size={18}/></span>
+              <div className="row mb-3">
+                <div className="col-md-6">
+                  <label className="form-label small fw-bold">Matrícula *</label>
+                  <input type="text" className="form-control bg-light border-0" value={matricula} onChange={(e)=>setMatricula(e.target.value)} required />
                 </div>
-                <p className="text-muted mt-1" style={{ fontSize: '11px' }}>La contraseña debe tener al menos 8 caracteres</p>
+                <div className="col-md-6">
+                  <label className="form-label small fw-bold">Teléfono</label>
+                  <input type="text" className="form-control bg-light border-0" value={telefono} onChange={(e)=>setTelefono(e.target.value)} />
+                </div>
+              </div>
+              <div className="row mb-3">
+                <div className="col-md-6">
+                  <label className="form-label small fw-bold">Correo Institucional *</label>
+                  <input type="email" className="form-control bg-light border-0" value={email} onChange={(e)=>setEmail(e.target.value)} required />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label small fw-bold">Carrera *</label>
+                  <select className="form-select bg-light border-0" value={carrera} onChange={(e)=>setCarrera(e.target.value)} required>
+                    <option value="">Seleccionar...</option>
+                    {listaCarreras.map(c => <option key={c.id} value={c.nombre}>{c.nombre}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="row mb-3">
+                <div className="col-md-6">
+                  <label className="form-label small fw-bold">Rol *</label>
+                  <select className="form-select bg-light border-0" value={rol} onChange={(e)=>setRol(e.target.value)} required>
+                    <option value="">Seleccionar...</option>
+                    {listaRoles.filter(r=>r.activo).map(r => <option key={r.id} value={r.nombre}>{r.nombre}</option>)}
+                  </select>
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label small fw-bold">{userToEdit ? 'Nueva Contraseña (Opcional)' : 'Contraseña *'}</label>
+                  <div className="input-group">
+                    <input type={showPass ? "text" : "password"} className="form-control bg-light border-0" value={password} onChange={(e)=>setPassword(e.target.value)} />
+                    <button className="btn btn-light border-0" type="button" onClick={()=>setShowPass(!showPass)}>{showPass ? <Eye size={18}/> : <EyeOff size={18}/>}</button>
+                  </div>
+                </div>
               </div>
             </div>
+            <div className="modal-footer border-0 p-4 pt-0">
+              <button className="btn btn-outline-secondary flex-grow-1" onClick={onClose}>Cancelar</button>
+              <button className="btn btn-success flex-grow-1" style={{backgroundColor: '#00a854'}} onClick={handleRegister}>
+                {userToEdit ? 'Guardar Cambios' : 'Registrar Usuario'}
+              </button>
+            </div>
           </div>
-
-          {/* Footer del Modal (Los botones de tu segunda imagen) */}
-          <div className="modal-footer border-0 p-4 pt-0 d-flex gap-3">
-            <button 
-              type="button" 
-              className="btn btn-outline-secondary flex-grow-1 py-2 fw-bold border-2" 
-              style={{ borderRadius: '10px' }}
-              onClick={onClose}
-            >
-              Cancelar
-            </button>
-            <button 
-              type="button" 
-              className="btn btn-success flex-grow-1 py-2 fw-bold d-flex align-items-center justify-content-center gap-2" 
-              style={{ borderRadius: '10px', backgroundColor: '#00a854', border: 'none' }}
-            >
-              <UserPlus size={18} /> Registrar Usuario
-            </button>
-          </div>
-
         </div>
       </div>
-    </div>
   );
 }
