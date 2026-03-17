@@ -16,8 +16,12 @@ public class RolService {
         return rolRepository.findAll();
     }
 
+    public Rol guardar(Rol rol) {
+        return rolRepository.save(rol);
+    }
+
     public void cambiarEstado(Long id) {
-        Rol rol = rolRepository.findById(id).orElseThrow();
+        Rol rol = rolRepository.findById(id).orElseThrow(() -> new RuntimeException("Rol no encontrado"));
         rol.setActivo(!rol.getActivo());
         rolRepository.save(rol);
     }
