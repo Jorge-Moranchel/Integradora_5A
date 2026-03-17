@@ -41,9 +41,18 @@ public class PdfExportService {
         // Datos de las áreas
         for (Area area : areas) {
             table.addCell(area.getNombre());
-            table.addCell(area.getTipoDeporte());
-            table.addCell(area.getHorario());
-            table.addCell(area.getEstado());
+
+            // CORRECCIÓN 1: Usar getTipo() y validar si está vacío
+            table.addCell(area.getTipo() != null ? area.getTipo() : "N/A");
+
+            // CORRECCIÓN 2: Unir hora de apertura y cierre
+            String horario = area.getHoraApertura() + " - " + area.getHoraCierre();
+            table.addCell(horario);
+
+            // CORRECCIÓN 3: Poner la primera letra en mayúscula para que se vea mejor en el PDF
+            String estado = area.getEstado() != null ?
+                    area.getEstado().substring(0, 1).toUpperCase() + area.getEstado().substring(1) : "N/A";
+            table.addCell(estado);
         }
 
         document.add(table);
