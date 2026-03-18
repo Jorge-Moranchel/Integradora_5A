@@ -152,3 +152,12 @@ main {
   font-family: 'Inter', sans-serif !important;
   border-radius: 20px !important;
 }
+.btn-action.activate:hover {
+  background-color: #d1fae5;
+  border-color: #10b981;
+  color: #10b981 !important;
+}
+
+.text-decoration-line-through {
+  text-decoration: line-through !important;
+}
