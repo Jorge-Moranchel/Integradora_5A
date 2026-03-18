@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ShieldCheck, Pencil, Trash2, X, Plus } from 'lucide-react';
 import Swal from 'sweetalert2';
 
-export default function Roles() {
+export default function Roles() {v
     const [roles, setRoles] = useState([
         { id: 1, name: 'ESTUDIANTE', status: 'Activo' },
         { id: 2, name: 'PROFESOR', status: 'Activo' },
