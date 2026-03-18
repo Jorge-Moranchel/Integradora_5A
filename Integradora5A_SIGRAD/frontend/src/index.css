@@ -1,16 +1,14 @@
-/* --- CONFIGURACIÓN BASE Y RESET --- */
 body {
   margin: 0;
   padding: 0;
   font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
-  background-color: #f3f4f6; /* Fondo claro para que resalte el Sidebar oscuro */
+  background-color: #f3f4f6;
   overflow-x: hidden;
 }
 
-/* --- CONTENEDOR PRINCIPAL DEL SIDEBAR --- */
 .sidebar-container {
   width: 280px;
-  background-color: #0f172a; /* Azul Marino Profundo Profesional */
+  background-color: #0f172a;
   height: 100vh;
   position: fixed;
   left: 0;
@@ -22,8 +20,6 @@ body {
   box-shadow: 4px 0 15px rgba(0, 0, 0, 0.2);
 }
 
-/* --- FUERZA BRUTA: LETRAS BLANCAS ABSOLUTAS --- */
-/* Esto obliga a que nada de Bootstrap o estilos externos te ponga el texto gris */
 .sidebar-container h4,
 .sidebar-container p,
 .sidebar-container span,
@@ -32,12 +28,11 @@ body {
 .sidebar-container a,
 .sidebar-container svg {
   color: #ffffff !important;
-  stroke: #ffffff !important; /* Para que los iconos Lucide brillen en blanco */
+  stroke: #ffffff !important;
   text-decoration: none !important;
   opacity: 1 !important;
 }
 
-/* --- LINKS DE NAVEGACIÓN --- */
 .nav-link-custom {
   padding: 12px 16px;
   display: flex;
@@ -47,44 +42,69 @@ body {
   font-weight: 500;
   border-radius: 12px;
   margin: 0 14px 4px 14px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
   cursor: pointer;
 }
 
 .nav-link-custom:hover {
   background-color: rgba(255, 255, 255, 0.08);
-  transform: translateX(4px);
 }
 
-/* ESTADO ACTIVO (AZUL ELÉCTRICO PREMIUM) */
 .nav-link-custom.active {
   background-color: #2563eb !important;
   font-weight: 700;
   box-shadow: 0 4px 15px rgba(37, 99, 235, 0.5);
 }
 
-/* --- SECCIÓN DE CATÁLOGOS (DROPDOWN) --- */
-.catalog-header-pro {
-  padding: 10px 16px;
-  margin: 0 14px;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+main {
+  margin-left: 280px;
+  padding: 40px;
+  min-height: 100vh;
+}
+
+.table thead th {
+  border-bottom: 2px solid #f3f4f6;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-action {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
   border-radius: 10px;
-  transition: background 0.3s;
-  background-color: rgba(255, 255, 255, 0.03);
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  color: #6b7280;
 }
 
-.catalog-header-pro:hover {
-  background-color: rgba(255, 255, 255, 0.08);
+.btn-action svg {
+  stroke: currentColor !important;
 }
 
-/* --- FOOTER: PERFIL Y LOGOUT --- */
-.sidebar-footer-pro {
-  margin-top: auto;
-  padding: 15px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+.btn-action.edit:hover {
+  background-color: #eff6ff;
+  border-color: #3b82f6;
+  color: #3b82f6 !important;
+}
+
+.btn-action.delete:hover {
+  background-color: #fef2f2;
+  border-color: #ef4444;
+  color: #ef4444 !important;
+}
+
+.modal-content {
+  border: none !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+}
+
+.modal-header .btn-close {
+  box-shadow: none !important;
 }
 
 .profile-box {
@@ -93,9 +113,8 @@ body {
   padding: 12px;
   display: flex;
   align-items: center;
-  justify-content: space-between; /* LOGOUT A LA DERECHA */
+  justify-content: space-between;
   border-radius: 14px;
-  width: 100%;
 }
 
 .avatar-letter {
@@ -107,21 +126,6 @@ body {
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  font-size: 0.85rem;
-  flex-shrink: 0;
-}
-
-/* BOTÓN DE LOGOUT (SALIDA) */
-.logout-btn-minimal {
-  background: none;
-  border: none;
-  padding: 8px;
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
 }
 
 .logout-btn-minimal:hover {
@@ -129,47 +133,22 @@ body {
 }
 
 .logout-btn-minimal:hover svg {
-  stroke: #ef4444 !important; /* Rojo vibrante al pasar el mouse */
+  stroke: #ef4444 !important;
 }
 
-/* --- COMPONENTES DEL DASHBOARD (ÁREA DERECHA) --- */
-main {
-  margin-left: 280px; /* Espacio para el sidebar fijo */
-  padding: 40px;
-  min-height: 100vh;
+.extra-small {
+  font-size: 0.7rem;
 }
 
 .status-dot-online {
   width: 10px;
   height: 10px;
-  background: #10b981; /* Verde esmeralda */
+  background: #10b981;
   border-radius: 50%;
   box-shadow: 0 0 10px #10b981;
 }
 
-/* --- UTILIDADES --- */
-.extra-small {
-  font-size: 0.7rem;
-}
-
-.text-truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Animación para el dropdown */
-.animate__fadeInDown {
-  animation: fadeInDown 0.3s ease-out;
-}
-
-@keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Reset de Focus */
-button:focus, a:focus {
-  outline: none !important;
-  box-shadow: none !important;
+.swal2-popup {
+  font-family: 'Inter', sans-serif !important;
+  border-radius: 20px !important;
 }

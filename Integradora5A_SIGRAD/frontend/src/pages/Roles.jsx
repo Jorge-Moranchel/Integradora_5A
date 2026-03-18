@@ -1,133 +1,156 @@
-import React, { useEffect, useState } from 'react';
-import { Plus, Ban, CheckCircle, Save, X } from "lucide-react";
+import React, { useState } from 'react';
+import { ShieldCheck, Pencil, Trash2, X, Plus } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 export default function Roles() {
-    const [roles, setRoles] = useState([]);
-    const [nombreNuevoRol, setNombreNuevoRol] = useState("");
-    const [mostrarForm, setMostrarForm] = useState(false);
+    const [roles, setRoles] = useState([
+        { id: 1, name: 'ESTUDIANTE', status: 'Activo' },
+        { id: 2, name: 'PROFESOR', status: 'Activo' },
+        { id: 3, name: 'ADMINISTRATIVO', status: 'Activo' },
+    ]);
 
-    const API_URL = 'http://localhost:8080/api/roles';
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [newRoleName, setNewRoleName] = useState('');
 
-    const cargarRoles = () => {
-        fetch(API_URL)
-            .then(res => res.json())
-            .then(data => setRoles(data))
-            .catch(err => console.error("Error al cargar roles:", err));
+    const openModal = () => {
+        setNewRoleName('');
+        setIsModalOpen(true);
     };
 
-    useEffect(() => { cargarRoles(); }, []);
+    const closeModal = () => setIsModalOpen(false);
 
-    // FUNCIÓN PARA CREAR EL ROL
-    const manejarEnvio = async (e) => {
+    const handleRegister = (e) => {
         e.preventDefault();
-        if (!nombreNuevoRol.trim()) return;
+        if (!newRoleName.trim()) return;
 
-        try {
-            const res = await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    nombre: nombreNuevoRol.toUpperCase(), // Recomendado para roles
-                    activo: true
-                })
-            });
+        const newEntry = {
+            id: roles.length + 1,
+            name: newRoleName.toUpperCase(),
+            status: 'Activo'
+        };
 
-            if (res.ok) {
-                setNombreNuevoRol("");
-                setMostrarForm(false);
-                cargarRoles(); // Recarga la lista
-            }
-        } catch (err) {
-            console.error("Error al crear rol:", err);
-        }
+        setRoles([...roles, newEntry]);
+        closeModal();
+
+        Swal.fire({
+            title: '¡Guardado!',
+            text: 'El rol se ha registrado correctamente.',
+            icon: 'success',
+            confirmButtonColor: '#10b981'
+        });
     };
 
-    const toggleEstado = async (id) => {
-        try {
-            const res = await fetch(`${API_URL}/${id}/estado`, {
-                method: 'PATCH'
-            });
-            if (res.ok) cargarRoles();
-        } catch (err) {
-            console.error("Error al actualizar:", err);
-        }
+    const handleDelete = (id) => {
+        Swal.fire({
+            title: '¿Estás seguro?',
+            text: "Esta acción no se puede deshacer",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Sí, borrar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                setRoles(roles.filter(r => r.id !== id));
+                Swal.fire('Borrado', 'El rol ha sido eliminado.', 'success');
+            }
+        });
     };
 
     return (
-        <div className="p-5 animate__animated animate__fadeIn">
-            <div className="d-flex justify-content-between align-items-center mb-4">
+        <div className="container-fluid p-4" style={{ backgroundColor: '#f3f4f6', minHeight: '100vh' }}>
+
+            <div className="d-flex justify-content-between align-items-center mb-5">
                 <div>
-                    <h2 className="fw-bold mb-1 text-dark">Gestión de Roles</h2>
-                    <p className="text-muted small">Catálogo para registro en App Móvil</p>
+                    <h1 className="fw-bold m-0" style={{ letterSpacing: '-1.5px', color: '#111827' }}>Gestión de Roles</h1>
+                    <p className="text-muted m-0">Catálogo para registro en App Móvil</p>
                 </div>
                 <button
-                    onClick={() => setMostrarForm(!mostrarForm)}
-                    className={`btn ${mostrarForm ? 'btn-secondary' : 'btn-success'} d-flex align-items-center gap-2 px-4 py-2 fw-bold`}
+                    className="btn btn-success d-flex align-items-center gap-2 px-4 py-2 shadow-sm"
+                    style={{ backgroundColor: '#10b981', borderColor: '#10b981', borderRadius: '12px' }}
+                    onClick={openModal}
                 >
-                    {mostrarForm ? <X size={18} /> : <Plus size={18} />}
-                    {mostrarForm ? 'Cancelar' : 'Nuevo Rol'}
+                    <Plus size={18} />
+                    <span className="fw-bold">Nuevo Rol</span>
                 </button>
             </div>
 
-            {/* FORMULARIO DE REGISTRO */}
-            {mostrarForm && (
-                <div className="card border-0 shadow-sm mb-4 p-3 animate__animated animate__fadeInDown">
-                    <form onSubmit={manejarEnvio} className="row g-3">
-                        <div className="col-md-10">
-                            <input
-                                type="text"
-                                className="form-control"
-                                placeholder="Escribe el nombre del rol (ej: PROFESOR)"
-                                value={nombreNuevoRol}
-                                onChange={(e) => setNombreNuevoRol(e.target.value)}
-                                autoFocus
-                            />
+            {/* TABLA LIMPIA */}
+            <div className="bg-white rounded-4 shadow-sm overflow-hidden border">
+                <table className="table table-hover m-0">
+                    <thead style={{ backgroundColor: '#f9fafb' }}>
+                    <tr>
+                        <th className="ps-4 py-3 text-muted fw-bold" style={{ fontSize: '0.75rem' }}>ID</th>
+                        <th className="py-3 text-muted fw-bold" style={{ fontSize: '0.75rem' }}>NOMBRE DEL ROL</th>
+                        <th className="py-3 text-muted fw-bold" style={{ fontSize: '0.75rem' }}>ESTADO</th>
+                        <th className="pe-4 py-3 text-muted fw-bold text-center" style={{ fontSize: '0.75rem' }}>ACCIONES</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {roles.map((role) => (
+                        <tr key={role.id} className="align-middle">
+                            <td className="ps-4 fw-bold text-muted">#{role.id}</td>
+                            <td className="fw-semibold" style={{ color: '#374151' }}>{role.name}</td>
+                            <td>
+                                    <span className="badge rounded-pill" style={{ backgroundColor: '#d1fae5', color: '#065f46', padding: '6px 12px', fontSize: '0.7rem' }}>
+                                        {role.status}
+                                    </span>
+                            </td>
+                            <td className="pe-4">
+                                <div className="d-flex justify-content-center gap-2">
+                                    <button className="btn-action edit" title="Editar">
+                                        <Pencil size={16} />
+                                    </button>
+                                    <button className="btn-action delete" title="Borrar" onClick={() => handleDelete(role.id)}>
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    ))}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* MODAL UNIFICADO (ESTILO CARRERAS) */}
+            {isModalOpen && (
+                <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content border-0 rounded-4 shadow-lg">
+                            <div className="modal-header border-0 p-4 pb-0">
+                                <h5 className="modal-title fw-bold d-flex align-items-center gap-2">
+                                    <ShieldCheck size={22} className="text-success" />
+                                    Nuevo Rol
+                                </h5>
+                                <button type="button" className="btn-close" onClick={closeModal}></button>
+                            </div>
+                            <form onSubmit={handleRegister}>
+                                <div className="modal-body p-4">
+                                    <div className="mb-3">
+                                        <label className="form-label fw-bold small text-dark">Nombre del Rol</label>
+                                        <input
+                                            type="text"
+                                            className="form-control p-2 px-3"
+                                            placeholder="Ej: ESTUDIANTE"
+                                            style={{ backgroundColor: '#f9fafb', borderRadius: '10px' }}
+                                            value={newRoleName}
+                                            onChange={(e) => setNewRoleName(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="d-flex justify-content-end gap-2 mt-4">
+                                        <button type="button" className="btn border-0 fw-bold" onClick={closeModal}>Cancelar</button>
+                                        <button type="submit" className="btn btn-success px-4 fw-bold" style={{ backgroundColor: '#10b981', borderRadius: '10px' }}>
+                                            Registrar
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
                         </div>
-                        <div className="col-md-2">
-                            <button type="submit" className="btn btn-success w-100 d-flex align-items-center justify-content-center gap-2">
-                                <Save size={18} /> Guardar
-                            </button>
-                        </div>
-                    </form>
+                    </div>
                 </div>
             )}
-
-            <div className="bg-white rounded-3 shadow-sm border p-4">
-                <div className="table-responsive">
-                    <table className="table table-hover align-middle mb-0">
-                        <thead className="table-light">
-                        <tr className="text-muted small text-uppercase">
-                            <th className="py-3 text-center">ID</th>
-                            <th className="py-3">Nombre del rol</th>
-                            <th className="py-3">Estado</th>
-                            <th className="py-3 text-center">Acciones</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {roles.map(rol => (
-                            <tr key={rol.id}>
-                                <td className="py-3 text-center fw-bold text-dark">{rol.id}</td>
-                                <td className="py-3">{rol.nombre}</td>
-                                <td className="py-3">
-                                        <span className={`badge px-3 py-2 ${rol.activo ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'}`}>
-                                            {rol.activo ? "Activo" : "Inactivo"}
-                                        </span>
-                                </td>
-                                <td className="py-3 text-center">
-                                    <button
-                                        onClick={() => toggleEstado(rol.id)}
-                                        className={`btn btn-sm btn-light border shadow-sm ${rol.activo ? 'text-danger' : 'text-success'}`}
-                                        title={rol.activo ? "Desactivar" : "Activar"}
-                                    >
-                                        {rol.activo ? <Ban size={20} /> : <CheckCircle size={20} />}
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
         </div>
     );
 }
