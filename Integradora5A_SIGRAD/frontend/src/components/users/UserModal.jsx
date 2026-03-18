@@ -15,18 +15,21 @@ export default function UserModal({ show, onClose, userToEdit }) {
   const [listaCarreras, setListaCarreras] = useState([]);
   const [listaRoles, setListaRoles] = useState([]);
 
+  // useEffect PRINCIPAL: Maneja placeholders e info del usuario
   useEffect(() => {
     if (show) {
       cargarCatalogos();
       if (userToEdit) {
+        // --- MODO EDICIÓN ---
         setNombre(userToEdit.nombre);
         setMatricula(userToEdit.matricula);
         setTelefono(userToEdit.telefono || '');
         setEmail(userToEdit.emailInstitucional);
         setCarrera(userToEdit.carrera || '');
         setRol(userToEdit.rol || '');
-        setPassword('');
+        setPassword(''); // Por seguridad no cargamos la contraseña
       } else {
+        // --- MODO REGISTRO ---
         limpiarCampos();
       }
     }
@@ -96,7 +99,7 @@ export default function UserModal({ show, onClose, userToEdit }) {
                     className="form-control bg-light border-0"
                     value={nombre}
                     onChange={(e)=>setNombre(e.target.value)}
-                    placeholder="Ej. Jorge Moranchel"
+                    placeholder="Ej. Jorge Moranchel" // Placeholder siempre visible como pista
                     required
                 />
               </div>
@@ -108,7 +111,7 @@ export default function UserModal({ show, onClose, userToEdit }) {
                       className="form-control bg-light border-0"
                       value={matricula}
                       onChange={(e)=>setMatricula(e.target.value)}
-                      placeholder="20243DS059"
+                      placeholder="20243DS059" // Placeholder siempre visible como pista
                       required
                   />
                 </div>
@@ -119,7 +122,7 @@ export default function UserModal({ show, onClose, userToEdit }) {
                       className="form-control bg-light border-0"
                       value={telefono}
                       onChange={(e)=>setTelefono(e.target.value)}
-                      placeholder="+52 777 123 4567"
+                      placeholder="+52 777 123 4567" // Placeholder siempre visible como pista
                   />
                 </div>
               </div>
@@ -131,7 +134,7 @@ export default function UserModal({ show, onClose, userToEdit }) {
                       className="form-control bg-light border-0"
                       value={email}
                       onChange={(e)=>setEmail(e.target.value)}
-                      placeholder="matricula@utez.edu.mx"
+                      placeholder="matricula@utez.edu.mx" // Placeholder siempre visible como pista
                       required
                   />
                 </div>
@@ -159,7 +162,7 @@ export default function UserModal({ show, onClose, userToEdit }) {
                         className="form-control bg-light border-0"
                         value={password}
                         onChange={(e)=>setPassword(e.target.value)}
-                        placeholder="••••••••"
+                        placeholder="••••••••" // Placeholder siempre visible
                     />
                     <button className="btn btn-light border-0" type="button" onClick={()=>setShowPass(!showPass)}>{showPass ? <Eye size={18}/> : <EyeOff size={18}/>}</button>
                   </div>
