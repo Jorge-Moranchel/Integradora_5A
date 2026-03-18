@@ -30,4 +30,22 @@ public class CarreraController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @PutMapping("/actualizar/{id}")
+    public ResponseEntity<?> actualizarCarrera(@PathVariable Long id, @RequestBody Carrera carrera) {
+        try {
+            return ResponseEntity.ok(carreraService.actualizar(id, carrera));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/estado/{id}")
+    public ResponseEntity<?> cambiarEstado(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(carreraService.cambiarEstado(id));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }

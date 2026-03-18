@@ -27,4 +27,25 @@ public class CarreraService {
         }
         return carreraRepository.save(carrera);
     }
+
+    public Carrera actualizar(Long id, Carrera carreraUpdate) throws Exception {
+        Carrera existente = carreraRepository.findById(id)
+                .orElseThrow(() -> new Exception("Error: Carrera no encontrada"));
+
+        if (carreraUpdate.getNombre() == null || carreraUpdate.getNombre().trim().isEmpty()) {
+            throw new Exception("El nombre de la carrera es obligatorio");
+        }
+
+        existente.setNombre(carreraUpdate.getNombre());
+        return carreraRepository.save(existente);
+    }
+
+    public Carrera cambiarEstado(Long id) throws Exception {
+        Carrera existente = carreraRepository.findById(id)
+                .orElseThrow(() -> new Exception("Error: Carrera no encontrada"));
+
+        // Invertimos el estado (Si era true pasa a false, y viceversa)
+        existente.setHabilitada(!existente.getHabilitada());
+        return carreraRepository.save(existente);
+    }
 }
