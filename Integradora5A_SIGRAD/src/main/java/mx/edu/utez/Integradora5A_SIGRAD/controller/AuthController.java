@@ -13,7 +13,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "http://localhost:5173") 
+@CrossOrigin(origins = "http://localhost:5173")
 public class AuthController {
 
     @Autowired
@@ -23,24 +23,40 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody Map<String, String> request) {
         String correo = request.get("correo");
         String password = request.get("password");
+        Map<String, Object> response = new HashMap<>();
 
+        // 1. Validación: No dejar campos vacíos
+        if (correo == null || correo.trim().isEmpty() || password == null || password.trim().isEmpty()) {
+            response.put("status", "error");
+            response.put("message", "Debes ingresar correo y contraseña para entrar.");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        // 2. Buscar al usuario en la base de datos de Oracle
         Optional<Usuario> userOpt = usuarioRepository.findByEmailInstitucional(correo);
 
         if (userOpt.isPresent()) {
             Usuario user = userOpt.get();
-            // Ahora que los getters son manuales, esto NO debe marcar error
+
+            // 3. Comparar contraseñas (Recuerda que estamos usando getters manuales)
             if (user.getContrasena().equals(password)) {
-                Map<String, Object> response = new HashMap<>();
                 response.put("status", "success");
+                response.put("message", "¡Bienvenido de nuevo, " + user.getNombre() + "!");
                 response.put("nombre", user.getNombre());
                 response.put("rol", user.getRol() != null ? user.getRol() : "ADMIN");
-                
+
                 return ResponseEntity.ok(response);
+            } else {
+                // Contraseña incorrecta
+                response.put("status", "error");
+                response.put("message", "La contraseña es incorrecta. Intenta de nuevo.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
         }
 
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("message", "Correo o contraseña incorrectos");
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+        // 4. Usuario no encontrado
+        response.put("status", "error");
+        response.put("message", "No existe una cuenta con ese correo institucional.");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 }

@@ -13,6 +13,15 @@ public class Usuario {
     @Column(name = "NOMBRE")
     private String nombre;
 
+    @Column(name = "MATRICULA") // Campo nuevo para tu Modal
+    private String matricula;
+
+    @Column(name = "TELEFONO") // Campo nuevo para tu Modal
+    private String telefono;
+
+    @Column(name = "CARRERA") // Campo nuevo para tu Modal
+    private String carrera;
+
     @Column(name = "EMAILINSTITUCIONAL", unique = true)
     private String emailInstitucional;
 
@@ -22,15 +31,26 @@ public class Usuario {
     @Column(name = "ROL")
     private String rol;
 
-    // Constructor vacío (Obligatorio para JPA)
+    @Column(name = "ESTADO")
+    private Boolean estado = true;
+
     public Usuario() {}
 
-    // GETTERS Y SETTERS MANUALES (Esto elimina el error del controlador)
+    // --- GETTERS Y SETTERS MANUALES ---
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
+
+    public String getMatricula() { return matricula; }
+    public void setMatricula(String matricula) { this.matricula = matricula; }
+
+    public String getTelefono() { return telefono; }
+    public void setTelefono(String telefono) { this.telefono = telefono; }
+
+    public String getCarrera() { return carrera; }
+    public void setCarrera(String carrera) { this.carrera = carrera; }
 
     public String getEmailInstitucional() { return emailInstitucional; }
     public void setEmailInstitucional(String emailInstitucional) { this.emailInstitucional = emailInstitucional; }
@@ -40,4 +60,7 @@ public class Usuario {
 
     public String getRol() { return rol; }
     public void setRol(String rol) { this.rol = rol; }
+
+    public Boolean getEstado() { return estado; }
+    public void setEstado(Boolean estado) { this.estado = estado; }
 }
