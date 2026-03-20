@@ -1,6 +1,6 @@
 package mx.edu.utez.Integradora5A_SIGRAD.service;
 
-import mx.edu.utez.Integradora5A_SIGRAD.DTO.ReservaDTO;
+import mx.edu.utez.Integradora5A_SIGRAD.dto.ReservaDTO;
 import mx.edu.utez.Integradora5A_SIGRAD.model.Area;
 import mx.edu.utez.Integradora5A_SIGRAD.model.Reserva;
 import mx.edu.utez.Integradora5A_SIGRAD.model.Usuario;

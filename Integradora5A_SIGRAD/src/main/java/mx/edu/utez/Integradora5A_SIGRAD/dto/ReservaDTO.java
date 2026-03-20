@@ -1,4 +1,4 @@
-package mx.edu.utez.Integradora5A_SIGRAD.DTO;
+package mx.edu.utez.Integradora5A_SIGRAD.dto;
 
 public class ReservaDTO {
 
