@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Edit, ShieldCheck, ChevronLeft, ChevronRight, Power } from "lucide-react";
+import { Plus, Search, Edit, ShieldCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import Swal from 'sweetalert2';
 import RoleModal from '../components/roles/RoleModal';
 
@@ -10,7 +10,7 @@ export default function Roles() {
     const [filtro, setFiltro] = useState('Todas');
     const [roleParaEditar, setRoleParaEditar] = useState(null);
     const [paginaActual, setPaginaActual] = useState(1);
-    const elementosPorPagina = 10;
+    const elementosPorPagina = 5;
 
     const obtenerRoles = async () => {
         try {
@@ -24,32 +24,19 @@ export default function Roles() {
         }
     };
 
-    useEffect(() => {
-        obtenerRoles();
-    }, []);
-
-    useEffect(() => {
-        setPaginaActual(1);
-    }, [searchTerm, filtro]);
+    useEffect(() => { obtenerRoles(); }, []);
+    useEffect(() => { setPaginaActual(1); }, [searchTerm, filtro]);
 
     const handleCambiarEstado = async (id) => {
         try {
-            const response = await fetch(`http://localhost:8080/api/roles/${id}/estado`, {
-                method: 'PATCH'
-            });
-
+            const response = await fetch(`http://localhost:8080/api/roles/${id}/estado`, { method: 'PATCH' });
             if (response.ok) {
                 obtenerRoles();
-                const Toast = Swal.mixin({
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 2000
-                });
+                const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
                 Toast.fire({ icon: 'success', title: 'Estado actualizado' });
             }
         } catch (error) {
-            Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+            Swal.fire('Error', 'No se pudo conectar', 'error');
         }
     };
 
@@ -67,13 +54,10 @@ export default function Roles() {
     const indicePrimer = indiceUltimo - elementosPorPagina;
     const rolesPaginados = rolesFiltrados.slice(indicePrimer, indiceUltimo);
 
-    const paginaSiguiente = () => {
-        if (paginaActual < totalPaginas) setPaginaActual(paginaActual + 1);
-    };
-
-    const paginaAnterior = () => {
-        if (paginaActual > 1) setPaginaActual(paginaActual - 1);
-    };
+    const numerosPagina = [];
+    for (let i = 1; i <= totalPaginas; i++) {
+        numerosPagina.push(i);
+    }
 
     return (
         <div className="p-5 animate__animated animate__fadeIn bg-light" style={{ minHeight: '100vh' }}>
@@ -177,38 +161,42 @@ export default function Roles() {
                     </table>
                 </div>
 
-                {totalPaginas > 1 && (
-                    <div className="d-flex justify-content-between align-items-center mt-4">
-                        <span className="text-muted small">
-                            Total: {rolesFiltrados.length} roles
-                        </span>
-                        <div className="d-flex gap-2 align-items-center">
+                <div className="d-flex justify-content-between align-items-center mt-4">
+                    <span className="text-muted small">
+                        Mostrando <b>{indicePrimer + 1}</b> a <b>{Math.min(indiceUltimo, rolesFiltrados.length)}</b> de <b>{rolesFiltrados.length}</b> resultados
+                    </span>
+                    <div className="d-flex gap-1">
+                        <button
+                            className="btn btn-light border btn-sm px-2"
+                            onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
+                            disabled={paginaActual === 1}
+                        >
+                            <ChevronLeft size={16} />
+                        </button>
+
+                        {numerosPagina.map(num => (
                             <button
-                                className="btn btn-outline-secondary btn-sm rounded-3"
-                                onClick={paginaAnterior}
-                                disabled={paginaActual === 1}
+                                key={num}
+                                className={`btn btn-sm px-3 ${paginaActual === num ? 'btn-primary' : 'btn-light border text-primary'}`}
+                                onClick={() => setPaginaActual(num)}
+                                style={{ borderRadius: '4px', fontWeight: 'bold' }}
                             >
-                                <ChevronLeft size={16} />
+                                {num}
                             </button>
-                            <span className="small fw-bold">{paginaActual} / {totalPaginas}</span>
-                            <button
-                                className="btn btn-outline-secondary btn-sm rounded-3"
-                                onClick={paginaSiguiente}
-                                disabled={paginaActual === totalPaginas}
-                            >
-                                <ChevronRight size={16} />
-                            </button>
-                        </div>
+                        ))}
+
+                        <button
+                            className="btn btn-light border btn-sm px-2"
+                            onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))}
+                            disabled={paginaActual === totalPaginas}
+                        >
+                            <ChevronRight size={16} />
+                        </button>
                     </div>
-                )}
+                </div>
             </div>
 
-            <RoleModal
-                show={showModal}
-                onClose={() => setShowModal(false)}
-                onRefresh={obtenerRoles}
-                roleToEdit={roleParaEditar}
-            />
+            <RoleModal show={showModal} onClose={() => setShowModal(false)} onRefresh={obtenerRoles} roleToEdit={roleParaEditar} />
         </div>
     );
 }
