@@ -161,3 +161,11 @@ main {
 .text-decoration-line-through {
   text-decoration: line-through !important;
 }
+.custom-switch:checked {
+  background-color: #10b981 !important;
+  border-color: #10b981 !important;
+}
+
+.custom-switch:focus {
+  box-shadow: none !important;
+}
