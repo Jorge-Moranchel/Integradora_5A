@@ -16,4 +16,10 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
     // 3. EL CAZADOR DE CHOQUES PARA EDICIÓN:
     // Igual que el primero, pero ignora el ID de la reserva que estamos modificando
     List<Reserva> findByAreaIdAndFechaAndEstadoNotAndIdNot(Long idArea, String fecha, String estado, Long idReserva);
+
+    // Cuenta todas las reservas que estén "CONFIRMADA"
+    long countByEstado(String estado);
+
+    // Cuenta las reservas de un día en específico que estén "CONFIRMADA"
+    long countByFechaAndEstado(String fecha, String estado);
 }
