@@ -14,10 +14,10 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 
-@Configuration
+//@Configuration
 public class DataSeeder {
 
-    @Bean
+    //@Bean
     CommandLineRunner initDatabase(UsuarioRepository usuarioRepo, AreaRepository areaRepo, ReservaRepository reservaRepo) {
         return args -> {
             if (usuarioRepo.count() == 0) {
