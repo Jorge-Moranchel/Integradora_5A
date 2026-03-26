@@ -90,4 +90,11 @@ public class ReservaController {
         response.put("idReserva", actualizada.getId());
         return ResponseEntity.ok(response);
     }
+
+    // NUEVO ENDPOINT PARA LA APP MÓVIL: Trae solo las reservas de un usuario específico
+    @GetMapping("/usuario/{idUsuario}")
+    public ResponseEntity<List<Reserva>> listarReservasPorUsuario(@PathVariable Long idUsuario) {
+        List<Reserva> misReservas = reservaRepository.findByUsuarioId(idUsuario);
+        return ResponseEntity.ok(misReservas);
+    }
 }
