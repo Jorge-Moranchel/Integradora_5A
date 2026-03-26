@@ -22,30 +22,18 @@ public class CarreraController {
     }
 
     @PostMapping("/guardar")
-    public ResponseEntity<?> guardarCarrera(@RequestBody Carrera carrera) {
-        try {
-            Carrera nueva = carreraService.guardar(carrera);
-            return ResponseEntity.ok(nueva);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<?> guardarCarrera(@RequestBody Carrera carrera) throws Exception {
+        Carrera nueva = carreraService.guardar(carrera);
+        return ResponseEntity.ok(nueva);
     }
 
     @PutMapping("/actualizar/{id}")
-    public ResponseEntity<?> actualizarCarrera(@PathVariable Long id, @RequestBody Carrera carrera) {
-        try {
-            return ResponseEntity.ok(carreraService.actualizar(id, carrera));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<?> actualizarCarrera(@PathVariable Long id, @RequestBody Carrera carrera) throws Exception {
+        return ResponseEntity.ok(carreraService.actualizar(id, carrera));
     }
 
     @PutMapping("/estado/{id}")
-    public ResponseEntity<?> cambiarEstado(@PathVariable Long id) {
-        try {
-            return ResponseEntity.ok(carreraService.cambiarEstado(id));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<?> cambiarEstado(@PathVariable Long id) throws Exception {
+        return ResponseEntity.ok(carreraService.cambiarEstado(id));
     }
 }

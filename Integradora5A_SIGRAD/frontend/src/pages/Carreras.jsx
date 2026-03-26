@@ -33,6 +33,17 @@ export default function Carreras() {
             if (response.ok) {
                 obtenerCarreras();
                 Swal.fire({ icon: 'success', title: 'Estado actualizado', timer: 1500, showConfirmButton: false });
+            } else {
+                let msg = 'No se pudo actualizar el estado';
+                try {
+                    const data = await response.json();
+                    msg = data?.mensaje || data?.message || msg;
+                } catch (_) {
+                    try {
+                        msg = await response.text();
+                    } catch (_) {}
+                }
+                Swal.fire('Error', msg, 'error');
             }
         } catch (error) {
             Swal.fire('Error', 'Problema de conexión', 'error');
@@ -117,7 +128,14 @@ export default function Carreras() {
                                 <td>
                                     <div className="d-flex align-items-center gap-2">
                                         <div className="p-2 rounded bg-success bg-opacity-10 text-success"><GraduationCap size={18} /></div>
-                                        <span className={`fw-bold ${!carrera.habilitada && 'text-decoration-line-through text-muted'}`}>{carrera.nombre}</span>
+                                        <span className={`fw-bold ${!carrera.habilitada && 'text-decoration-line-through text-muted'}`}>
+                                            {carrera.nombre}
+                                            {carrera.abreviatura ? (
+                                                <span className="ms-2 badge bg-secondary bg-opacity-10 text-secondary border-0" style={{ fontSize: '11px' }}>
+                                                    {carrera.abreviatura}
+                                                </span>
+                                            ) : null}
+                                        </span>
                                     </div>
                                 </td>
                                 <td className="text-center">

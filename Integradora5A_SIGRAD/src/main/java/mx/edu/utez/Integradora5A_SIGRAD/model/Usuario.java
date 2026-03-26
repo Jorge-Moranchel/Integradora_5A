@@ -34,6 +34,8 @@ public class Usuario {
     @Column(name = "ESTADO")
     private Boolean estado = true;
 
+    private Boolean validado = false;
+
     public Usuario() {}
 
     // --- GETTERS Y SETTERS MANUALES ---
@@ -63,4 +65,7 @@ public class Usuario {
 
     public Boolean getEstado() { return estado; }
     public void setEstado(Boolean estado) { this.estado = estado; }
+
+    public Boolean getValidado() { return validado; }
+    public void setValidado(Boolean validado) { this.validado = validado; }
 }

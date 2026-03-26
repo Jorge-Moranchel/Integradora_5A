@@ -4,15 +4,21 @@ import { GraduationCap } from 'lucide-react';
 
 export default function CarreraModal({ show, onClose, onRefresh, carreraToEdit }) {
     const [nombre, setNombre] = useState('');
+    const [abreviatura, setAbreviatura] = useState('');
+    const [descripcion, setDescripcion] = useState('');
 
     // EL CEREBRO DEL MODAL: Detecta si vamos a crear o a editar
     useEffect(() => {
         if (carreraToEdit) {
             // Si nos mandan una carrera para editar, rellenamos el input
             setNombre(carreraToEdit.nombre);
+            setAbreviatura(carreraToEdit.abreviatura || '');
+            setDescripcion(carreraToEdit.descripcion || '');
         } else {
             // Si es nueva, limpiamos el input
             setNombre('');
+            setAbreviatura('');
+            setDescripcion('');
         }
     }, [carreraToEdit, show]);
 
@@ -30,7 +36,7 @@ export default function CarreraModal({ show, onClose, onRefresh, carreraToEdit }
             const response = await fetch(url, {
                 method: metodo,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nombre })
+                body: JSON.stringify({ nombre, abreviatura, descripcion })
             });
 
             if (response.ok) {
@@ -41,11 +47,21 @@ export default function CarreraModal({ show, onClose, onRefresh, carreraToEdit }
                     'success'
                 );
                 setNombre('');
+                setAbreviatura('');
+                setDescripcion('');
                 onRefresh();
                 onClose();
             } else {
-                const error = await response.text();
-                Swal.fire('Error', error, 'error');
+                let msg = 'Error al guardar';
+                try {
+                    const data = await response.json();
+                    msg = data?.mensaje || data?.message || msg;
+                } catch (_) {
+                    try {
+                        msg = await response.text();
+                    } catch (_) {}
+                }
+                Swal.fire('Error', msg, 'error');
             }
         } catch (error) {
             Swal.fire('Error', 'No hay conexión con el servidor', 'error');
@@ -81,6 +97,28 @@ export default function CarreraModal({ show, onClose, onRefresh, carreraToEdit }
                                 onChange={(e) => setNombre(e.target.value)}
                                 required
                             />
+
+                            <div className="mt-3">
+                                <label className="form-label fw-bold small">Abreviatura</label>
+                                <input
+                                    type="text"
+                                    className="form-control bg-light border-0 py-2"
+                                    placeholder="Ej: DSM"
+                                    value={abreviatura}
+                                    onChange={(e) => setAbreviatura(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="mt-3">
+                                <label className="form-label fw-bold small">Descripción</label>
+                                <input
+                                    type="text"
+                                    className="form-control bg-light border-0 py-2"
+                                    placeholder="Descripción breve de la carrera"
+                                    value={descripcion}
+                                    onChange={(e) => setDescripcion(e.target.value)}
+                                />
+                            </div>
                         </div>
                         <div className="modal-footer border-0 p-4 pt-0 d-flex gap-2">
                             <button type="button" className="btn btn-light flex-grow-1 fw-bold" onClick={onClose}>

@@ -1,12 +1,14 @@
 package mx.edu.utez.Integradora5A_SIGRAD.controller;
 
 import mx.edu.utez.Integradora5A_SIGRAD.model.Usuario;
+import mx.edu.utez.Integradora5A_SIGRAD.exception.ResourceNotFoundException;
+import mx.edu.utez.Integradora5A_SIGRAD.exception.UnauthorizedException;
 import mx.edu.utez.Integradora5A_SIGRAD.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Objects;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -27,36 +29,28 @@ public class AuthController {
 
         // 1. Validación: No dejar campos vacíos
         if (correo == null || correo.trim().isEmpty() || password == null || password.trim().isEmpty()) {
-            response.put("status", "error");
-            response.put("message", "Debes ingresar correo y contraseña para entrar.");
-            return ResponseEntity.badRequest().body(response);
+            throw new IllegalArgumentException("Debes ingresar correo y contraseña para entrar.");
         }
 
         // 2. Buscar al usuario en la base de datos de Oracle
         Optional<Usuario> userOpt = usuarioRepository.findByEmailInstitucional(correo);
 
-        if (userOpt.isPresent()) {
-            Usuario user = userOpt.get();
-
-            // 3. Comparar contraseñas (Recuerda que estamos usando getters manuales)
-            if (user.getContrasena().equals(password)) {
-                response.put("status", "success");
-                response.put("message", "¡Bienvenido de nuevo, " + user.getNombre() + "!");
-                response.put("nombre", user.getNombre());
-                response.put("rol", user.getRol() != null ? user.getRol() : "ADMIN");
-
-                return ResponseEntity.ok(response);
-            } else {
-                // Contraseña incorrecta
-                response.put("status", "error");
-                response.put("message", "La contraseña es incorrecta. Intenta de nuevo.");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-            }
+        if (!userOpt.isPresent()) {
+            throw new ResourceNotFoundException("No existe una cuenta con ese correo institucional.");
         }
 
-        // 4. Usuario no encontrado
-        response.put("status", "error");
-        response.put("message", "No existe una cuenta con ese correo institucional.");
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        Usuario user = userOpt.get();
+
+        // 3. Comparar contraseñas (Recuerda que estamos usando getters manuales)
+        if (!Objects.equals(user.getContrasena(), password)) {
+            throw new UnauthorizedException("La contraseña es incorrecta. Intenta de nuevo.");
+        }
+
+        response.put("status", "success");
+        response.put("message", "¡Bienvenido de nuevo, " + user.getNombre() + "!");
+        response.put("nombre", user.getNombre());
+        response.put("rol", user.getRol() != null ? user.getRol() : "ADMIN");
+
+        return ResponseEntity.ok(response);
     }
 }

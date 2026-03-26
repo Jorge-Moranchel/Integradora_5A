@@ -37,6 +37,8 @@ public class CarreraService {
         }
 
         existente.setNombre(carreraUpdate.getNombre());
+        existente.setAbreviatura(carreraUpdate.getAbreviatura());
+        existente.setDescripcion(carreraUpdate.getDescripcion());
         return carreraRepository.save(existente);
     }
 
