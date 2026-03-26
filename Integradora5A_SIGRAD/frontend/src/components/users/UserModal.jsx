@@ -8,7 +8,7 @@ export default function UserModal({ show, onClose, userToEdit }) {
   const [telefono, setTelefono] = useState('');
   const [email, setEmail] = useState('');
   const [carrera, setCarrera] = useState('');
-  const [rol, setRol] = useState('');
+  const [rol, setRol] = useState(''); // rol seleccionado
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
 
@@ -56,6 +56,21 @@ export default function UserModal({ show, onClose, userToEdit }) {
     const url = userToEdit ? `http://localhost:8080/api/usuarios/actualizar/${userToEdit.id}` : 'http://localhost:8080/api/usuarios/registrar';
     const method = userToEdit ? 'PUT' : 'POST';
 
+    // Validación solo para ESTUDIANTE:
+    // matrícula debe coincidir con el prefijo del correo (antes del @)
+    if ((rol || '').toUpperCase() === 'ESTUDIANTE') {
+      const prefijoCorreo = (email || '').split('@')[0] || '';
+      const mat = (matricula || '').trim();
+      if (!prefijoCorreo || !mat || mat.toLowerCase() !== prefijoCorreo.toLowerCase()) {
+        Swal.fire(
+            'Error',
+            `La matrícula debe coincidir con el prefijo del correo (ej. matrícula 20243DS051 para correo 20243ds051@utez.edu.mx)`,
+            'error'
+        );
+        return;
+      }
+    }
+
     try {
       const response = await fetch(url, {
         method: method,
@@ -72,8 +87,12 @@ export default function UserModal({ show, onClose, userToEdit }) {
         Swal.fire('¡Éxito!', userToEdit ? 'Usuario actualizado' : 'Usuario registrado', 'success');
         onClose();
       } else {
-        const data = await response.json();
-        Swal.fire('Error', data.message, 'error');
+        let msg = 'Ocurrió un error';
+        try {
+          const data = await response.json();
+          msg = data?.mensaje || data?.message || msg;
+        } catch (_) {}
+        Swal.fire('Error', msg, 'error');
       }
     } catch (error) { Swal.fire('Error', 'Backend no responde', 'error'); }
   };
@@ -105,13 +124,15 @@ export default function UserModal({ show, onClose, userToEdit }) {
               </div>
               <div className="row mb-3">
                 <div className="col-md-6">
-                  <label className="form-label small fw-bold">Matrícula *</label>
+                  <label className="form-label small fw-bold">
+                    {(rol || '').toUpperCase() === 'ESTUDIANTE' ? 'Matrícula *' : 'Código de Trabajador *'}
+                  </label>
                   <input
                       type="text"
                       className="form-control bg-light border-0"
                       value={matricula}
                       onChange={(e)=>setMatricula(e.target.value)}
-                      placeholder="20243DS059" // Placeholder siempre visible como pista
+                      placeholder={(rol || '').toUpperCase() === 'ESTUDIANTE' ? 'Ej. 20243DS059' : 'Ej. 12345'}
                       required
                   />
                 </div>

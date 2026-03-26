@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Search, FileText } from 'lucide-react';
+import { Download, Search, FileText, Plus, Edit } from 'lucide-react';
+import Swal from 'sweetalert2';
+import ReservaModal from '../components/reservas/ReservaModal';
 
 export default function Historial() {
     const [reservas, setReservas] = useState([]);
     const [loading, setLoading] = useState(true);
     const [busqueda, setBusqueda] = useState("");
+    const [showModal, setShowModal] = useState(false);
+    const [reservaAEditar, setReservaAEditar] = useState(null);
 
     useEffect(() => {
         fetchReservas();
@@ -28,6 +32,43 @@ export default function Historial() {
         window.open('http://localhost:8080/api/reservas/exportar-pdf', '_blank');
     };
 
+    const abrirModalNuevaReserva = () => {
+        setReservaAEditar(null);
+        setShowModal(true);
+    };
+
+    const abrirModalEditarReserva = (reserva) => {
+        setReservaAEditar(reserva);
+        setShowModal(true);
+    };
+
+    const handleCancelar = async (id) => {
+        try {
+            const response = await fetch(`http://localhost:8080/api/reservas/cancelar/${id}`, {
+                method: 'PUT'
+            });
+
+            if (response.ok) {
+                Swal.fire('Listo', 'Reserva cancelada correctamente', 'success');
+                fetchReservas();
+                return;
+            }
+
+            let msg = 'No se pudo cancelar la reserva';
+            try {
+                const data = await response.json();
+                msg = data?.mensaje || data?.message || msg;
+            } catch (_) {
+                try {
+                    msg = await response.text();
+                } catch (_) {}
+            }
+            Swal.fire('Error', msg, 'error');
+        } catch (e) {
+            Swal.fire('Error', 'Backend no responde', 'error');
+        }
+    };
+
     // Filtro actualizado para incluir la búsqueda por Rol
     const reservasFiltradas = reservas.filter((reserva) => {
         const nombreUsuario = reserva.usuario?.nombre?.toLowerCase() || "";
@@ -47,13 +88,21 @@ export default function Historial() {
                     <h2 className="fw-bold">Historial de Reservas</h2>
                     <p className="text-muted">Visualiza y gestiona todas las reservas del sistema</p>
                 </div>
-                <button
-                    className="btn btn-success d-flex align-items-center gap-2 px-4 py-2 fw-bold"
-                    onClick={handleExport}
-                    disabled={reservas.length === 0}
-                >
-                    <Download size={20} /> Exportar
-                </button>
+                <div className="d-flex align-items-center gap-2">
+                    <button
+                        className="btn btn-success d-flex align-items-center gap-2 px-4 py-2 fw-bold"
+                        onClick={abrirModalNuevaReserva}
+                    >
+                        <Plus size={20} /> Nueva Reserva
+                    </button>
+                    <button
+                        className="btn btn-success d-flex align-items-center gap-2 px-4 py-2 fw-bold"
+                        onClick={handleExport}
+                        disabled={reservas.length === 0}
+                    >
+                        <Download size={20} /> Exportar
+                    </button>
+                </div>
             </div>
 
             <div className="card border-0 shadow-sm p-4">
@@ -89,6 +138,7 @@ export default function Historial() {
                                 <th>Fecha</th>
                                 <th>Horario</th>
                                 <th>Estado</th>
+                                <th className="text-center">Acciones</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -115,6 +165,35 @@ export default function Historial() {
                                                 {reserva.estado}
                                             </span>
                                     </td>
+                                    <td className="text-center">
+                                        <div className="d-flex justify-content-center gap-2">
+                                            <button
+                                                className="btn btn-sm btn-outline-primary"
+                                                onClick={() => abrirModalEditarReserva(reserva)}
+                                                disabled={reserva.estado === 'COMPLETADA' || reserva.estado === 'CANCELADA'}
+                                                title={
+                                                    reserva.estado === 'COMPLETADA' || reserva.estado === 'CANCELADA'
+                                                        ? 'Solo se pueden editar reservas CONFIRMADAS'
+                                                        : 'Editar reserva'
+                                                }
+                                            >
+                                                <Edit size={14} />
+                                            </button>
+
+                                            {reserva.estado === 'CONFIRMADA' ? (
+                                                <button
+                                                    className="btn btn-sm btn-outline-danger fw-bold"
+                                                    onClick={() => handleCancelar(reserva.id)}
+                                                >
+                                                    Cancelar
+                                                </button>
+                                            ) : (
+                                                <button className="btn btn-sm btn-outline-secondary fw-bold" disabled>
+                                                    Cancelar
+                                                </button>
+                                            )}
+                                        </div>
+                                    </td>
                                 </tr>
                             ))}
                             </tbody>
@@ -130,6 +209,13 @@ export default function Historial() {
                     </div>
                 )}
             </div>
+
+            <ReservaModal
+                show={showModal}
+                onClose={() => setShowModal(false)}
+                onSuccess={fetchReservas}
+                reservaAEditar={reservaAEditar}
+            />
         </div>
     );
 }
