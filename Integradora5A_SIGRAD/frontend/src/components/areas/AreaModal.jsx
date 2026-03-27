@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Image as ImageIcon, Clock } from 'lucide-react';
+import Swal from 'sweetalert2'; // Importación añadida
 
-// 1. Agregamos 'areaToEdit' a las propiedades que recibe el modal
 export default function AreaModal({ show, onClose, fetchAreas, areaToEdit }) {
   const [formData, setFormData] = useState({
     nombre: '',
@@ -11,8 +11,6 @@ export default function AreaModal({ show, onClose, fetchAreas, areaToEdit }) {
     imagen: ''
   });
 
-  // 2. EL CEREBRO DEL MODAL: Si nos mandan un área para editar, rellenamos los campos.
-  // Si no (es una nueva), los dejamos en blanco.
   useEffect(() => {
     if (areaToEdit) {
       setFormData({
@@ -20,7 +18,7 @@ export default function AreaModal({ show, onClose, fetchAreas, areaToEdit }) {
         ubicacion: areaToEdit.ubicacion,
         horaApertura: areaToEdit.horaApertura,
         horaCierre: areaToEdit.horaCierre,
-        imagen: '' // La imagen se queda vacía por si no quiere cambiarla
+        imagen: ''
       });
     } else {
       setFormData({
@@ -46,38 +44,45 @@ export default function AreaModal({ show, onClose, fetchAreas, areaToEdit }) {
     e.preventDefault();
 
     if (formData.horaApertura >= formData.horaCierre) {
-      alert('Error: La hora de apertura debe ser menor a la hora de cierre.');
+      Swal.fire({
+        title: 'Horario Inválido',
+        text: 'La hora de apertura debe ser menor a la hora de cierre.',
+        icon: 'error',
+        confirmButtonColor: '#ef4444'
+      });
       return;
     }
 
-    // 3. DECISIÓN DE RUTA: ¿Vamos a Crear o a Actualizar?
     const url = areaToEdit
         ? `http://localhost:8080/api/areas/actualizar/${areaToEdit.id}`
         : 'http://localhost:8080/api/areas/registrar';
 
-    // Si es editar usamos PUT, si es crear usamos POST
     const metodo = areaToEdit ? 'PUT' : 'POST';
 
     try {
       const response = await fetch(url, {
         method: metodo,
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
 
       if (response.ok) {
-        alert(areaToEdit ? 'Área actualizada correctamente' : 'Área deportiva registrada correctamente');
+        Swal.fire({
+          title: areaToEdit ? '¡Actualizado!' : '¡Registrado!',
+          text: areaToEdit ? 'El área se ha modificado con éxito.' : 'La nueva área deportiva ha sido creada.',
+          icon: 'success',
+          confirmButtonColor: '#10b981',
+          timer: 2500,
+          showConfirmButton: false
+        });
         fetchAreas();
         onClose();
       } else {
         const errorText = await response.text();
-        alert(`Error del servidor: ${errorText}`);
+        Swal.fire('Error del servidor', errorText, 'error');
       }
     } catch (error) {
-      console.error('Error al conectar con el servidor:', error);
-      alert('Error de conexión con el servidor.');
+      Swal.fire('Error de conexión', 'No se pudo establecer contacto con el servidor.', 'error');
     }
   };
 
@@ -91,7 +96,6 @@ export default function AreaModal({ show, onClose, fetchAreas, areaToEdit }) {
                 <div className="bg-success-subtle p-2 rounded-circle text-success">
                   <MapPin size={24} />
                 </div>
-                {/* 4. Título dinámico */}
                 <h4 className="modal-title fw-bold text-dark">
                   {areaToEdit ? 'Editar Área Deportiva' : 'Crear Nueva Área Deportiva'}
                 </h4>
@@ -129,7 +133,6 @@ export default function AreaModal({ show, onClose, fetchAreas, areaToEdit }) {
               <div className="mb-4">
                 <label className="form-label small fw-bold">
                   Imagen del Área
-                  {/* 5. Si estamos editando, la imagen no es obligatoria */}
                   {areaToEdit && <span className="text-muted fw-normal ms-1">(Opcional si no deseas cambiarla)</span>}
                   {!areaToEdit && <span className="text-danger">*</span>}
                 </label>
@@ -175,12 +178,10 @@ export default function AreaModal({ show, onClose, fetchAreas, areaToEdit }) {
               <button type="button" className="btn btn-outline-secondary flex-grow-1 py-2 fw-bold rounded-3 shadow-none" onClick={onClose}>
                 Cancelar
               </button>
-              <button type="submit" className="btn btn-success flex-grow-1 py-2 fw-bold rounded-3 shadow-none">
-                {/* 6. Botón dinámico */}
+              <button type="submit" className="btn btn-success flex-grow-1 py-2 fw-bold rounded-3 shadow-none" style={{backgroundColor: '#10b981', border: 'none'}}>
                 {areaToEdit ? 'Guardar Cambios' : 'Guardar Área'}
               </button>
             </div>
-
           </form>
         </div>
       </div>

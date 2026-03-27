@@ -6,7 +6,7 @@ import mx.edu.utez.Integradora5A_SIGRAD.model.Usuario;
 import mx.edu.utez.Integradora5A_SIGRAD.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.SimpleMailMessage; // CORREGIDO: se eliminó el "in"
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,7 +35,6 @@ public class UsuarioService {
 
         String email = dto.getEmailInstitucional().trim();
 
-        // Evitar duplicidad de correos
         if (usuarioRepository.existsByEmailInstitucional(email)) {
             throw new EmailAlreadyExistsException("Este correo ya está registrado.");
         }
@@ -45,7 +44,6 @@ public class UsuarioService {
             throw new IllegalArgumentException("El rol es obligatorio");
         }
 
-        // Regla para ESTUDIANTE: matricula = parte antes del @ en emailInstitucional
         if ("ESTUDIANTE".equalsIgnoreCase(rol)) {
             String matricula = dto.getMatricula() != null ? dto.getMatricula().trim() : null;
             String localPart = obtenerParteAntesDeArroba(email);
@@ -54,7 +52,7 @@ public class UsuarioService {
                 throw new IllegalArgumentException("La matrícula es obligatoria para ESTUDIANTE");
             }
             if (!matricula.equals(localPart)) {
-                throw new IllegalArgumentException("Para ESTUDIANTE, la matrícula debe coincidir con el email (antes del @)");
+                throw new IllegalArgumentException("La matrícula debe coincidir con el email (antes del @)");
             }
         }
 
@@ -71,7 +69,6 @@ public class UsuarioService {
 
         Usuario guardado = usuarioRepository.save(usuario);
 
-        // Generar código temporal y enviarlo por correo
         String codigoVerificacion = generarCodigoVerificacion();
         enviarCorreoConfirmacion(guardado, codigoVerificacion);
 
@@ -83,26 +80,21 @@ public class UsuarioService {
                 dto.getMatricula() == null || dto.getMatricula().trim().isEmpty() ||
                 dto.getEmailInstitucional() == null || dto.getEmailInstitucional().trim().isEmpty() ||
                 dto.getContrasena() == null || dto.getContrasena().trim().isEmpty()) {
-            throw new IllegalArgumentException("Faltan datos obligatorios (Nombre, Matrícula, Correo o Contraseña).");
+            throw new IllegalArgumentException("Faltan datos obligatorios.");
         }
 
-        // Validación de dominio del correo
         if (!dto.getEmailInstitucional().endsWith("@utez.edu.mx")) {
-            throw new IllegalArgumentException("Solo se permiten correos institucionales (@utez.edu.mx).");
+            throw new IllegalArgumentException("Solo se permiten correos @utez.edu.mx");
         }
     }
 
     private String obtenerParteAntesDeArroba(String email) {
         int idx = email.indexOf('@');
-        if (idx < 0) {
-            return email;
-        }
-        return email.substring(0, idx);
+        return (idx < 0) ? email : email.substring(0, idx);
     }
 
     private String generarCodigoVerificacion() {
-        int numero = ThreadLocalRandom.current().nextInt(100000, 999999);
-        return String.valueOf(numero);
+        return String.valueOf(ThreadLocalRandom.current().nextInt(100000, 999999));
     }
 
     private void enviarCorreoConfirmacion(Usuario usuario, String codigoVerificacion) {
@@ -112,12 +104,7 @@ public class UsuarioService {
             message.setFrom(mailFrom);
         }
         message.setSubject("Confirmación de cuenta");
-        message.setText(
-                "Hola " + (usuario.getNombre() != null ? usuario.getNombre() : "") + ",\n\n" +
-                        "Tu código de verificación temporal es: " + codigoVerificacion + "\n\n" +
-                        "Si no solicitaste este registro, ignora este correo."
-        );
+        message.setText("Hola " + usuario.getNombre() + ",\n\nTu código es: " + codigoVerificacion);
         mailSender.send(message);
     }
 }
-

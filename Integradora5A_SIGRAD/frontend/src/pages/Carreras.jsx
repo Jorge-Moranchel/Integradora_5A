@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Power, GraduationCap, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Search, Edit, GraduationCap, ChevronLeft, ChevronRight } from "lucide-react";
 import Swal from 'sweetalert2';
 import CarreraModal from '../components/carreras/CarreraModal';
 
@@ -32,18 +32,13 @@ export default function Carreras() {
             const response = await fetch(`http://localhost:8080/api/carreras/estado/${id}`, { method: 'PUT' });
             if (response.ok) {
                 obtenerCarreras();
-                Swal.fire({ icon: 'success', title: 'Estado actualizado', timer: 1500, showConfirmButton: false });
-            } else {
-                let msg = 'No se pudo actualizar el estado';
-                try {
-                    const data = await response.json();
-                    msg = data?.mensaje || data?.message || msg;
-                } catch (_) {
-                    try {
-                        msg = await response.text();
-                    } catch (_) {}
-                }
-                Swal.fire('Error', msg, 'error');
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+                Toast.fire({ icon: 'success', title: 'Estado actualizado' });
             }
         } catch (error) {
             Swal.fire('Error', 'Problema de conexión', 'error');
@@ -70,15 +65,42 @@ export default function Carreras() {
 
     return (
         <div className="p-5 bg-light" style={{ minHeight: '100vh' }}>
+            <style>
+                {`
+                .custom-switch {
+                    width: 48px !important;
+                    height: 24px !important;
+                    cursor: pointer;
+                    background-color: #dee2e6;
+                    border: none !important;
+                }
+                .custom-switch:checked {
+                    background-color: #10b981 !important;
+                }
+                .custom-switch:focus {
+                    box-shadow: none !important;
+                }
+                .badge-abreviatura {
+                    background-color: #f1f3f5;
+                    color: #495057;
+                    font-weight: 700;
+                    font-size: 0.7rem;
+                    padding: 4px 8px;
+                    border-radius: 6px;
+                    text-transform: uppercase;
+                }
+                `}
+            </style>
+
             <div className="d-flex justify-content-between align-items-center mb-5">
                 <div>
-                    <h2 className="fw-bold m-0" style={{ fontSize: '2.5rem' }}>Administración de Carreras</h2>
-                    <p className="text-muted">Gestiona el catálogo de carreras del sistema</p>
+                    <h2 className="fw-bold m-0" style={{ fontSize: '2.5rem', letterSpacing: '-1.5px' }}>Administración de Carreras</h2>
+                    <p className="text-muted m-0 mt-1">Gestiona el catálogo de carreras del sistema</p>
                 </div>
                 <button
-                    className="btn btn-success d-flex align-items-center gap-2 fw-bold"
+                    className="btn btn-success d-flex align-items-center gap-2 fw-bold shadow-sm"
                     style={{ borderRadius: '12px', padding: '12px 24px', backgroundColor: '#10b981', border: 'none' }}
-                    onClick={() => { setCarreraParaEditar(null); setShowModal(true); }}
+                    onClick={() => { setAreaParaEditar(null); setShowModal(true); }}
                 >
                     <Plus size={20} /> Nueva Carrera
                 </button>
@@ -97,12 +119,12 @@ export default function Carreras() {
                             style={{ borderRadius: '12px' }}
                         />
                     </div>
-                    <div className="d-flex gap-2">
+                    <div className="d-flex gap-2 p-1 bg-light rounded-3">
                         {['Todas', 'Habilitadas', 'Inhabilitadas'].map(estado => (
                             <button
                                 key={estado}
-                                className={`btn px-4 py-2 ${filtro === estado ? 'bg-dark text-white fw-bold' : 'bg-white text-muted border'}`}
-                                style={{ borderRadius: '10px' }}
+                                className={`btn btn-sm px-4 py-2 border-0 ${filtro === estado ? 'bg-dark text-white shadow' : 'text-muted'}`}
+                                style={{ borderRadius: '10px', transition: '0.3s', fontWeight: '600' }}
                                 onClick={() => setFiltro(estado)}
                             >
                                 {estado}
@@ -114,41 +136,64 @@ export default function Carreras() {
                 <div className="table-responsive">
                     <table className="table table-hover align-middle">
                         <thead>
-                        <tr className="small text-muted">
-                            <th>ID</th>
-                            <th>NOMBRE DE LA CARRERA</th>
-                            <th className="text-center">ESTADO</th>
-                            <th className="text-center">ACCIONES</th>
+                        <tr className="small text-muted text-uppercase" style={{ letterSpacing: '1px' }}>
+                            <th className="ps-4">ID</th>
+                            <th>Nombre de la Carrera</th>
+                            <th className="text-center">Estado</th>
+                            <th className="text-center pe-4">Acciones</th>
                         </tr>
                         </thead>
                         <tbody>
-                        {carrerasPaginadas.map((carrera) => (
-                            <tr key={carrera.id}>
-                                <td className="text-muted">#{carrera.id}</td>
-                                <td>
-                                    <div className="d-flex align-items-center gap-2">
-                                        <div className="p-2 rounded bg-success bg-opacity-10 text-success"><GraduationCap size={18} /></div>
-                                        <span className={`fw-bold ${!carrera.habilitada && 'text-decoration-line-through text-muted'}`}>
-                                            {carrera.nombre}
-                                            {carrera.abreviatura ? (
-                                                <span className="ms-2 badge bg-secondary bg-opacity-10 text-secondary border-0" style={{ fontSize: '11px' }}>
-                                                    {carrera.abreviatura}
+                        {carrerasPaginadas.length > 0 ? (
+                            carrerasPaginadas.map((carrera) => (
+                                <tr key={carrera.id}>
+                                    <td className="ps-4 text-muted fw-bold">#{carrera.id}</td>
+                                    <td>
+                                        <div className="d-flex align-items-center gap-3">
+                                            <div className="p-2 rounded-3 bg-success bg-opacity-10 text-success">
+                                                <GraduationCap size={20} />
+                                            </div>
+                                            <div className="d-flex align-items-center gap-2">
+                                                <span className={`fw-bolder fs-5 ${!carrera.habilitada && 'text-muted opacity-50'}`} style={{ color: '#111827' }}>
+                                                    {carrera.nombre}
                                                 </span>
-                                            ) : null}
-                                        </span>
-                                    </div>
-                                </td>
-                                <td className="text-center">
-                                    <span className={`badge rounded-pill ${carrera.habilitada ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'}`}>{carrera.habilitada ? 'Habilitada' : 'Inhabilitada'}</span>
-                                </td>
-                                <td className="text-center">
-                                    <div className="d-flex justify-content-center gap-2">
-                                        <button className="btn btn-light btn-sm border" onClick={() => { setCarreraParaEditar(carrera); setShowModal(true); }}><Edit size={16} className="text-primary" /></button>
-                                        <button className="btn btn-light btn-sm border" onClick={() => handleCambiarEstado(carrera.id)}><Power size={16} className={carrera.habilitada ? "text-danger" : "text-success"} /></button>
-                                    </div>
+                                                {carrera.abreviatura && (
+                                                    <span className="badge-abreviatura">
+                                                        {carrera.abreviatura}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="text-center">
+                                        <div className="form-check form-switch d-flex justify-content-center">
+                                            <input
+                                                className="form-check-input custom-switch shadow-none"
+                                                type="checkbox"
+                                                role="switch"
+                                                checked={carrera.habilitada}
+                                                onChange={() => handleCambiarEstado(carrera.id)}
+                                            />
+                                        </div>
+                                    </td>
+                                    <td className="text-center pe-4">
+                                        <button
+                                            className="btn btn-light btn-sm border-0 rounded-3 p-2"
+                                            onClick={() => { setCarreraParaEditar(carrera); setShowModal(true); }}
+                                        >
+                                            <Edit size={18} className="text-primary" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="4" className="text-center py-5 opacity-25">
+                                    <Search size={40} className="mb-2" />
+                                    <p className="m-0">No se encontraron resultados.</p>
                                 </td>
                             </tr>
-                        ))}
+                        )}
                         </tbody>
                     </table>
                 </div>
@@ -160,7 +205,7 @@ export default function Carreras() {
                     <div className="d-flex gap-1">
                         <button className="btn btn-light border btn-sm px-2" onClick={() => setPaginaActual(p => Math.max(1, p - 1))} disabled={paginaActual === 1}><ChevronLeft size={16} /></button>
                         {numerosPagina.map(num => (
-                            <button key={num} className={`btn btn-sm px-3 ${paginaActual === num ? 'btn-primary' : 'btn-light border text-primary'}`} onClick={() => setPaginaActual(num)} style={{ borderRadius: '4px', fontWeight: 'bold' }}>{num}</button>
+                            <button key={num} className={`btn btn-sm px-3 ${paginaActual === num ? 'btn-primary shadow-sm' : 'btn-light border text-primary'}`} onClick={() => setPaginaActual(num)} style={{ borderRadius: '4px', fontWeight: 'bold' }}>{num}</button>
                         ))}
                         <button className="btn btn-light border btn-sm px-2" onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))} disabled={paginaActual === totalPaginas}><ChevronRight size={16} /></button>
                     </div>
