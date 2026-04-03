@@ -109,4 +109,12 @@ public class UsuarioController {
                 .header("Content-Type", "text/html; charset=UTF-8")
                 .body(htmlResponse);
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> obtenerUsuarioPorId(@PathVariable Long id) {
+        Usuario user = usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado."));
+
+        return ResponseEntity.ok(user);
+    }
 }

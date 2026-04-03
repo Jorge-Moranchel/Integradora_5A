@@ -27,39 +27,38 @@ public class AuthController {
         String password = request.get("password");
         Map<String, Object> response = new HashMap<>();
 
-        // 1. Validación: No dejar campos vacíos
         if (correo == null || correo.trim().isEmpty() || password == null || password.trim().isEmpty()) {
             throw new IllegalArgumentException("Debes ingresar correo y contraseña para entrar.");
         }
 
-        // 2. Buscar al usuario en la base de datos de Oracle
         Optional<Usuario> userOpt = usuarioRepository.findByEmailInstitucional(correo);
 
-        if (!userOpt.isPresent()) {
-            throw new ResourceNotFoundException("No existe una cuenta con ese correo institucional.");
+        // 1. SEGURIDAD: Validamos que exista Y que la contraseña coincida en el mismo paso
+        if (!userOpt.isPresent() || !Objects.equals(userOpt.get().getContrasena(), password)) {
+            throw new UnauthorizedException("El correo y/o la contraseña son incorrectos.");
         }
 
         Usuario user = userOpt.get();
 
-        // 3. Comparar contraseñas
-        if (!Objects.equals(user.getContrasena(), password)) {
-            throw new UnauthorizedException("La contraseña es incorrecta. Intenta de nuevo.");
-        }
-
-        // 4. CANDADO: Verificamos que el usuario no esté bloqueado (estado = false)
         if (user.getEstado() != null && !user.getEstado()) {
             throw new UnauthorizedException("Tu cuenta ha sido bloqueada. Contacta a un administrador.");
         }
 
-        // 5. CANDADO: Verificamos que haya dado clic en el enlace del correo (validado = false)
         if (user.getValidado() != null && !user.getValidado()) {
             throw new UnauthorizedException("Tu cuenta aún no está activa. Revisa tu correo institucional y haz clic en el enlace de verificación.");
         }
 
         response.put("status", "success");
         response.put("message", "¡Bienvenido de nuevo, " + user.getNombre() + "!");
+
+        // 2. PERFIL COMPLETO: Mandamos todos los datos a la app móvil de un solo golpe
+        response.put("id", user.getId());
         response.put("nombre", user.getNombre());
         response.put("rol", user.getRol() != null ? user.getRol() : "ADMIN");
+        response.put("matricula", user.getMatricula() != null ? user.getMatricula() : "");
+        response.put("telefono", user.getTelefono() != null ? user.getTelefono() : "");
+        response.put("carrera", user.getCarrera() != null ? user.getCarrera() : "");
+        response.put("emailInstitucional", user.getEmailInstitucional());
 
         return ResponseEntity.ok(response);
     }
