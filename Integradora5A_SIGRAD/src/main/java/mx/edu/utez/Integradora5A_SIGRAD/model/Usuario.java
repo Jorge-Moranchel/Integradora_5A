@@ -36,6 +36,9 @@ public class Usuario {
 
     private Boolean validado = false;
 
+    @Column(name = "CODIGO_VERIFICACION")
+    private String codigoVerificacion;
+
     public Usuario() {}
 
     // --- GETTERS Y SETTERS MANUALES ---
@@ -68,4 +71,12 @@ public class Usuario {
 
     public Boolean getValidado() { return validado; }
     public void setValidado(Boolean validado) { this.validado = validado; }
+
+    public String getCodigoVerificacion() {
+        return codigoVerificacion;
+    }
+
+    public void setCodigoVerificacion(String codigoVerificacion) {
+        this.codigoVerificacion = codigoVerificacion;
+    }
 }

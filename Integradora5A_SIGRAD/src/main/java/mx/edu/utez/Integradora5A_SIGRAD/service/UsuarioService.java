@@ -11,6 +11,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Service
@@ -40,6 +41,17 @@ public class UsuarioService {
         }
 
         String rol = dto.getRol() != null ? dto.getRol().trim() : null;
+
+        // 👇 PARCHE PARA LA APP MÓVIL 👇
+        // Traducimos los roles que vienen de Android al formato de Spring Boot
+        if (rol != null) {
+            if (rol.equalsIgnoreCase("Alumno")) {
+                rol = "ESTUDIANTE";
+            } else if (rol.equalsIgnoreCase("Docente")) {
+                rol = "DOCENTE";
+            }
+        }
+
         if (rol == null || rol.isEmpty()) {
             throw new IllegalArgumentException("El rol es obligatorio");
         }
@@ -51,26 +63,35 @@ public class UsuarioService {
             if (matricula == null || matricula.isEmpty()) {
                 throw new IllegalArgumentException("La matrícula es obligatoria para ESTUDIANTE");
             }
-            if (!matricula.equals(localPart)) {
+            if (!matricula.equalsIgnoreCase(localPart)) {
                 throw new IllegalArgumentException("La matrícula debe coincidir con el email (antes del @)");
             }
         }
 
         Usuario usuario = new Usuario();
         usuario.setNombre(dto.getNombre().trim());
-        usuario.setMatricula(dto.getMatricula().trim());
+        usuario.setMatricula(dto.getMatricula() != null ? dto.getMatricula().trim() : null);
         usuario.setTelefono(dto.getTelefono());
         usuario.setCarrera(dto.getCarrera());
         usuario.setEmailInstitucional(email);
         usuario.setContrasena(dto.getContrasena());
-        usuario.setRol(rol);
+        usuario.setRol(rol); // Guardamos el rol ya traducido
         usuario.setEstado(dto.getEstado() != null ? dto.getEstado() : true);
         usuario.setValidado(false);
 
+        // 👇 LA MAGIA ARREGLADA (El orden es la clave) 👇
+
+        // 1. Generamos el token (UUID)
+        String tokenVerificacion = generarCodigoVerificacion();
+
+        // 2. Se lo asignamos al usuario ANTES de ir a la BD
+        usuario.setCodigoVerificacion(tokenVerificacion);
+
+        // 3. Ahora SÍ guardamos. El token viaja junto con los demás datos hacia Oracle.
         Usuario guardado = usuarioRepository.save(usuario);
 
-        String codigoVerificacion = generarCodigoVerificacion();
-        enviarCorreoConfirmacion(guardado, codigoVerificacion);
+        // 4. Mandamos el correo con el mismo token
+        enviarCorreoConfirmacion(guardado, tokenVerificacion);
 
         return guardado;
     }
@@ -94,17 +115,26 @@ public class UsuarioService {
     }
 
     private String generarCodigoVerificacion() {
-        return String.valueOf(ThreadLocalRandom.current().nextInt(100000, 999999));
+        // Genera un token larguísimo y único, ej: "550e8400-e29b-41d4-a716-446655440000"
+        return UUID.randomUUID().toString();
     }
 
-    private void enviarCorreoConfirmacion(Usuario usuario, String codigoVerificacion) {
+    private void enviarCorreoConfirmacion(Usuario usuario, String token) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(usuario.getEmailInstitucional());
         if (mailFrom != null && !mailFrom.isBlank()) {
             message.setFrom(mailFrom);
         }
-        message.setSubject("Confirmación de cuenta");
-        message.setText("Hola " + usuario.getNombre() + ",\n\nTu código es: " + codigoVerificacion);
+        message.setSubject("Activa tu cuenta de SIGRAD");
+
+        // Creamos la URL que apuntará a un nuevo endpoint en tu backend
+        String urlVerificacion = "http://localhost:8080/api/usuarios/verificar?token=" + token;
+
+        message.setText("Hola " + usuario.getNombre() + ",\n\n"
+                + "Gracias por registrarte. Para activar tu cuenta, por favor haz clic en el siguiente enlace:\n\n"
+                + urlVerificacion + "\n\n"
+                + "Si no solicitaste este registro, ignora este correo.");
+
         mailSender.send(message);
     }
 }

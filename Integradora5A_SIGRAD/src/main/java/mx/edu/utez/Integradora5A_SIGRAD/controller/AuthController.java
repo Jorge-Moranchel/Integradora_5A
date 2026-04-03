@@ -41,9 +41,19 @@ public class AuthController {
 
         Usuario user = userOpt.get();
 
-        // 3. Comparar contraseñas (Recuerda que estamos usando getters manuales)
+        // 3. Comparar contraseñas
         if (!Objects.equals(user.getContrasena(), password)) {
             throw new UnauthorizedException("La contraseña es incorrecta. Intenta de nuevo.");
+        }
+
+        // 4. CANDADO: Verificamos que el usuario no esté bloqueado (estado = false)
+        if (user.getEstado() != null && !user.getEstado()) {
+            throw new UnauthorizedException("Tu cuenta ha sido bloqueada. Contacta a un administrador.");
+        }
+
+        // 5. CANDADO: Verificamos que haya dado clic en el enlace del correo (validado = false)
+        if (user.getValidado() != null && !user.getValidado()) {
+            throw new UnauthorizedException("Tu cuenta aún no está activa. Revisa tu correo institucional y haz clic en el enlace de verificación.");
         }
 
         response.put("status", "success");
