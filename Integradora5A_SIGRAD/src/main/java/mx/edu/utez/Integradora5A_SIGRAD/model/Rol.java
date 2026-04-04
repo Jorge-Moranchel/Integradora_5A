@@ -11,6 +11,9 @@ public class Rol {
     @Column(nullable = false, unique = true)
     private String nombre;
 
+    @Column(name = "DESCRIPCION")
+    private String descripcion;
+
     @Column(name = "ACTIVO", nullable = false)
     private Boolean activo = true;
 
@@ -31,6 +34,14 @@ public class Rol {
 
     public void setNombre(String nombre) {
         this.nombre = nombre;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
     }
 
     public Boolean getActivo() { return activo; }

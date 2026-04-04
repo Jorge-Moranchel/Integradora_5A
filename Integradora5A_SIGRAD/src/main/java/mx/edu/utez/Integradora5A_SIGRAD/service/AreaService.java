@@ -99,4 +99,8 @@ public class AreaService {
 
         return areaRepository.save(areaActual);
     }
+
+    public Area obtenerAreaPorId(Long id) {
+        return areaRepository.findById(id).orElse(null);
+    }
 }

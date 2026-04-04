@@ -12,7 +12,11 @@ export default function Carreras() {
     const [paginaActual, setPaginaActual] = useState(1);
     const elementosPorPagina = 5;
 
+    // 1. ESTADO DE CARGA AGREGADO
+    const [isLoading, setIsLoading] = useState(true);
+
     const obtenerCarreras = async () => {
+        setIsLoading(true); // Encendemos el loading
         try {
             const response = await fetch('http://localhost:8080/api/carreras/listar');
             if (response.ok) {
@@ -21,6 +25,8 @@ export default function Carreras() {
             }
         } catch (error) {
             console.error("Error al obtener carreras:", error);
+        } finally {
+            setIsLoading(false); // Apagamos el loading al terminar
         }
     };
 
@@ -100,7 +106,7 @@ export default function Carreras() {
                 <button
                     className="btn btn-success d-flex align-items-center gap-2 fw-bold shadow-sm"
                     style={{ borderRadius: '12px', padding: '12px 24px', backgroundColor: '#10b981', border: 'none' }}
-                    onClick={() => { setAreaParaEditar(null); setShowModal(true); }}
+                    onClick={() => { setCarreraParaEditar(null); setShowModal(true); }}
                 >
                     <Plus size={20} /> Nueva Carrera
                 </button>
@@ -133,83 +139,103 @@ export default function Carreras() {
                     </div>
                 </div>
 
-                <div className="table-responsive">
-                    <table className="table table-hover align-middle">
-                        <thead>
-                        <tr className="small text-muted text-uppercase" style={{ letterSpacing: '1px' }}>
-                            <th className="ps-4">ID</th>
-                            <th>Nombre de la Carrera</th>
-                            <th className="text-center">Estado</th>
-                            <th className="text-center pe-4">Acciones</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {carrerasPaginadas.length > 0 ? (
-                            carrerasPaginadas.map((carrera) => (
-                                <tr key={carrera.id}>
-                                    <td className="ps-4 text-muted fw-bold">#{carrera.id}</td>
-                                    <td>
-                                        <div className="d-flex align-items-center gap-3">
-                                            <div className="p-2 rounded-3 bg-success bg-opacity-10 text-success">
-                                                <GraduationCap size={20} />
-                                            </div>
-                                            <div className="d-flex align-items-center gap-2">
-                                                <span className={`fw-bolder fs-5 ${!carrera.habilitada && 'text-muted opacity-50'}`} style={{ color: '#111827' }}>
-                                                    {carrera.nombre}
-                                                </span>
-                                                {carrera.abreviatura && (
-                                                    <span className="badge-abreviatura">
-                                                        {carrera.abreviatura}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="text-center">
-                                        <div className="form-check form-switch d-flex justify-content-center">
-                                            <input
-                                                className="form-check-input custom-switch shadow-none"
-                                                type="checkbox"
-                                                role="switch"
-                                                checked={carrera.habilitada}
-                                                onChange={() => handleCambiarEstado(carrera.id)}
-                                            />
-                                        </div>
-                                    </td>
-                                    <td className="text-center pe-4">
-                                        <button
-                                            className="btn btn-light btn-sm border-0 rounded-3 p-2"
-                                            onClick={() => { setCarreraParaEditar(carrera); setShowModal(true); }}
-                                        >
-                                            <Edit size={18} className="text-primary" />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan="4" className="text-center py-5 opacity-25">
-                                    <Search size={40} className="mb-2" />
-                                    <p className="m-0">No se encontraron resultados.</p>
-                                </td>
-                            </tr>
-                        )}
-                        </tbody>
-                    </table>
-                </div>
-
-                <div className="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
-                    <span className="text-muted small">
-                        Mostrando <b>{indicePrimer + 1}</b> a <b>{Math.min(indiceUltimo, carrerasFiltradas.length)}</b> de <b>{carrerasFiltradas.length}</b> resultados
-                    </span>
-                    <div className="d-flex gap-1">
-                        <button className="btn btn-light border btn-sm px-2" onClick={() => setPaginaActual(p => Math.max(1, p - 1))} disabled={paginaActual === 1}><ChevronLeft size={16} /></button>
-                        {numerosPagina.map(num => (
-                            <button key={num} className={`btn btn-sm px-3 ${paginaActual === num ? 'btn-primary shadow-sm' : 'btn-light border text-primary'}`} onClick={() => setPaginaActual(num)} style={{ borderRadius: '4px', fontWeight: 'bold' }}>{num}</button>
-                        ))}
-                        <button className="btn btn-light border btn-sm px-2" onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))} disabled={paginaActual === totalPaginas}><ChevronRight size={16} /></button>
+                {/* 2. RENDERIZADO CONDICIONAL CON EL LOADING AZUL */}
+                {isLoading ? (
+                    <div className="d-flex justify-content-center py-5 my-5">
+                        <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}>
+                            <span className="visually-hidden">Cargando...</span>
+                        </div>
                     </div>
-                </div>
+                ) : (
+                    <>
+                        <div className="table-responsive">
+                            <table className="table table-hover align-middle">
+                                <thead>
+                                <tr className="small text-muted text-uppercase" style={{ letterSpacing: '1px' }}>
+                                    <th className="ps-4">ID</th>
+                                    <th>Nombre de la Carrera</th>
+                                    <th className="text-center">Estado</th>
+                                    <th className="text-center pe-4">Acciones</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {carrerasPaginadas.length > 0 ? (
+                                    carrerasPaginadas.map((carrera) => (
+                                        <tr key={carrera.id}>
+                                            <td className="ps-4 text-muted fw-bold">#{carrera.id}</td>
+                                            <td>
+                                                <div className="d-flex align-items-center gap-3">
+                                                    <div className="p-2 rounded-3 bg-success bg-opacity-10 text-success">
+                                                        <GraduationCap size={20} />
+                                                    </div>
+                                                    <div className="d-flex align-items-center gap-2">
+                                                        <span className={`fw-bolder fs-5 ${!carrera.habilitada && 'text-muted opacity-50'}`} style={{ color: '#111827' }}>
+                                                            {carrera.nombre}
+                                                        </span>
+                                                        {carrera.abreviatura && (
+                                                            <span className="badge-abreviatura">
+                                                                {carrera.abreviatura}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </td>
+
+                                            {/* 👇 ESTADO: SWITCH CON ETIQUETA INFERIOR (IGUAL A USUARIOS) 👇 */}
+                                            <td className="py-3 text-center">
+                                                <div className="d-flex flex-column align-items-center gap-1">
+                                                    <div className="form-check form-switch m-0 d-flex justify-content-center p-0">
+                                                        <input
+                                                            className="form-check-input custom-switch m-0 shadow-none"
+                                                            type="checkbox"
+                                                            role="switch"
+                                                            checked={carrera.habilitada}
+                                                            onChange={() => handleCambiarEstado(carrera.id)}
+                                                        />
+                                                    </div>
+                                                    <span className={`badge ${carrera.habilitada ? 'bg-success bg-opacity-10 text-success' : 'bg-danger bg-opacity-10 text-danger'}`} style={{fontSize: '10px'}}>
+                                                        {carrera.habilitada ? 'HABILITADA' : 'INHABILITADA'}
+                                                    </span>
+                                                </div>
+                                            </td>
+
+                                            <td className="text-center pe-4">
+                                                <button
+                                                    className="btn btn-light btn-sm border-0 rounded-3 p-2"
+                                                    onClick={() => { setCarreraParaEditar(carrera); setShowModal(true); }}
+                                                >
+                                                    <Edit size={18} className="text-primary" />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan="4" className="text-center py-5 opacity-25">
+                                            <Search size={40} className="mb-2" />
+                                            <p className="m-0">No se encontraron resultados.</p>
+                                        </td>
+                                    </tr>
+                                )}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* El paginador solo se muestra si NO está cargando */}
+                        <div className="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                            <span className="text-muted small">
+                                Mostrando <b>{carrerasFiltradas.length > 0 ? indicePrimer + 1 : 0}</b> a <b>{Math.min(indiceUltimo, carrerasFiltradas.length)}</b> de <b>{carrerasFiltradas.length}</b> resultados
+                            </span>
+                            <div className="d-flex gap-1">
+                                <button className="btn btn-light border btn-sm px-2" onClick={() => setPaginaActual(p => Math.max(1, p - 1))} disabled={paginaActual === 1}><ChevronLeft size={16} /></button>
+                                {numerosPagina.map(num => (
+                                    <button key={num} className={`btn btn-sm px-3 ${paginaActual === num ? 'btn-primary shadow-sm' : 'btn-light border text-primary'}`} onClick={() => setPaginaActual(num)} style={{ borderRadius: '4px', fontWeight: 'bold' }}>{num}</button>
+                                ))}
+                                <button className="btn btn-light border btn-sm px-2" onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))} disabled={paginaActual === totalPaginas || totalPaginas === 0}><ChevronRight size={16} /></button>
+                            </div>
+                        </div>
+                    </>
+                )}
             </div>
 
             <CarreraModal show={showModal} onClose={() => setShowModal(false)} onRefresh={obtenerCarreras} carreraToEdit={carreraParaEditar} />

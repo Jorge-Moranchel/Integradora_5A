@@ -7,9 +7,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
 @RestController
 @RequestMapping("/api/roles")
-@CrossOrigin(origins = "http://localhost:5173")// Permite peticiones desde tu frontend
+@CrossOrigin(origins = "http://localhost:5173")
 public class RolController {
 
     @Autowired
@@ -23,10 +24,16 @@ public class RolController {
     // MÉTODO PARA GUARDAR NUEVOS ROLES
     @PostMapping
     public ResponseEntity<Rol> guardarRol(@RequestBody Rol rol) {
-        // Forzamos que el estado inicial sea true si viene nulo
         if (rol.getActivo() == null) rol.setActivo(true);
         Rol nuevoRol = rolService.guardar(rol);
         return ResponseEntity.ok(nuevoRol);
+    }
+
+    // 👇 NUEVO MÉTODO PARA EDITAR ROLES EXISTENTES 👇
+    @PutMapping("/{id}")
+    public ResponseEntity<Rol> actualizarRol(@PathVariable Long id, @RequestBody Rol rol) {
+        Rol rolActualizado = rolService.actualizar(id, rol);
+        return ResponseEntity.ok(rolActualizado);
     }
 
     @PatchMapping("/{id}/estado")

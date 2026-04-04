@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
-import Swal from 'sweetalert2'; // Importación obligatoria para los mensajes
+import Swal from 'sweetalert2';
 import AreaModal from '../components/areas/AreaModal';
 import AreaCard from '../components/areas/AreaCard';
 import BloquearModal from '../components/areas/BloquearModal';
@@ -13,6 +13,9 @@ export default function Areas() {
     const [areaSeleccionada, setAreaSeleccionada] = useState(null);
     const [areaParaEditar, setAreaParaEditar] = useState(null);
 
+    // 👇 NUEVO ESTADO PARA EL LOADING 👇
+    const [isLoading, setIsLoading] = useState(true);
+
     // FILTROS Y BÚSQUEDA
     const [searchTerm, setSearchTerm] = useState('');
     const [activeFilter, setActiveFilter] = useState('Todos');
@@ -22,6 +25,7 @@ export default function Areas() {
     const elementosPorPagina = 6;
 
     const fetchAreas = async () => {
+        setIsLoading(true); // Encendemos el loading antes de buscar
         try {
             const response = await fetch('http://localhost:8080/api/areas/listar');
             if (response.ok) {
@@ -30,6 +34,8 @@ export default function Areas() {
             }
         } catch (error) {
             console.error("Error al traer las áreas:", error);
+        } finally {
+            setIsLoading(false); // Apagamos el loading sin importar si falló o fue exitoso
         }
     };
 
@@ -49,7 +55,7 @@ export default function Areas() {
             text: "El área volverá a estar disponible para reservaciones.",
             icon: 'question',
             showCancelButton: true,
-            confirmButtonColor: '#10b981', // Tu verde esmeralda
+            confirmButtonColor: '#10b981',
             cancelButtonColor: '#6c757d',
             confirmButtonText: 'Sí, habilitar',
             cancelButtonText: 'Cancelar',
@@ -121,7 +127,7 @@ export default function Areas() {
                     style={{ borderRadius: '12px', backgroundColor: '#10b981', border: 'none' }}
                     onClick={() => { setAreaParaEditar(null); setShowModal(true); }}
                 >
-                    <Plus size={18} /> Nueva Área
+                    <Plus size={18} /> Nueva área
                 </button>
             </div>
 
@@ -155,8 +161,14 @@ export default function Areas() {
                 </div>
             </div>
 
-            {/* RENDERIZADO DE CARDS */}
-            {areasPaginadas.length === 0 ? (
+            {/* 👇 RENDERIZADO CONDICIONAL: LOADING VS CARDS 👇 */}
+            {isLoading ? (
+                <div className="d-flex justify-content-center py-5">
+                    <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Cargando...</span>
+                    </div>
+                </div>
+            )  : areasPaginadas.length === 0 ? (
                 <div className="text-center py-5 mt-4">
                     <MapPin size={80} className="text-muted mb-3 opacity-25" strokeWidth={1} />
                     <h4 className="fw-bold text-dark">No se encontraron áreas</h4>
@@ -173,7 +185,7 @@ export default function Areas() {
                                         setAreaSeleccionada(id);
                                         setShowBloquearModal(true);
                                     }}
-                                    onDesbloquear={handleDesbloquear} // Aquí se dispara el SweetAlert
+                                    onDesbloquear={handleDesbloquear}
                                     onEditar={(areaObj) => {
                                         setAreaParaEditar(areaObj);
                                         setShowModal(true);

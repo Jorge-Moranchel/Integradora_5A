@@ -3,13 +3,15 @@ package mx.edu.utez.Integradora5A_SIGRAD.dto;
 public class RolDTO {
     private Long id;
     private String nombre;
+    private String descripcion;
 
     public RolDTO() {
     }
 
-    public RolDTO(Long id, String nombre) {
+    public RolDTO(Long id, String nombre, String descripcion) {
         this.id = id;
         this.nombre = nombre;
+        this.descripcion = descripcion;
     }
 
     public Long getId() {
@@ -26,5 +28,13 @@ public class RolDTO {
 
     public void setNombre(String nombre) {
         this.nombre = nombre;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
     }
 }
