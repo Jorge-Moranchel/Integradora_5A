@@ -10,6 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -41,6 +46,19 @@ public class ReservaController {
     public ResponseEntity<List<Reserva>> listarTodasLasReservas() {
         // Traemos todas las reservas de la base de datos para mostrarlas en la tabla de React
         List<Reserva> reservas = reservaRepository.findAll();
+        return ResponseEntity.ok(reservas);
+    }
+
+    @GetMapping("/paginadas")
+    public ResponseEntity<Page<Reserva>> listarReservasPaginadas(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "") String termino) {
+
+        // Ordenamos para que las más recientes (ID mayor) salgan primero
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+        Page<Reserva> reservas = reservaRepository.buscarConPaginacion(termino, pageable);
+
         return ResponseEntity.ok(reservas);
     }
 
