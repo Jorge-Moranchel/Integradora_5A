@@ -10,16 +10,24 @@ export default function Usuarios() {
     const [searchTerm, setSearchTerm] = useState('');
     const [userToEdit, setUserToEdit] = useState(null);
 
+    // 👇 1. ESTADO DE CARGA AGREGADO 👇
+    const [isLoading, setIsLoading] = useState(true);
+
     // --- ESTADOS PARA PAGINACIÓN ---
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
 
     const fetchUsers = async () => {
+        setIsLoading(true); // Encendemos el loading
         try {
             const res = await fetch('http://localhost:8080/api/usuarios/listar');
             const data = await res.json();
             setUsers(data);
-        } catch (error) { console.error(error); }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setIsLoading(false); // Apagamos el loading sin importar qué pase
+        }
     };
 
     useEffect(() => { fetchUsers(); }, []);
@@ -129,7 +137,14 @@ export default function Usuarios() {
                     </div>
                 </div>
 
-                {filteredUsers.length > 0 ? (
+                {/* 👇 2. RENDERIZADO CONDICIONAL CON EL LOADING AZUL 👇 */}
+                {isLoading ? (
+                    <div className="d-flex justify-content-center py-5 my-5">
+                        <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}>
+                            <span className="visually-hidden">Cargando...</span>
+                        </div>
+                    </div>
+                ) : filteredUsers.length > 0 ? (
                     <>
                         <UserTable users={currentItems} onRefresh={fetchUsers} onEdit={handleEdit} />
 

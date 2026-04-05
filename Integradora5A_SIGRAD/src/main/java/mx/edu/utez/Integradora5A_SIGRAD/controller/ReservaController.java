@@ -10,6 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -44,6 +49,19 @@ public class ReservaController {
         return ResponseEntity.ok(reservas);
     }
 
+    @GetMapping("/paginadas")
+    public ResponseEntity<Page<Reserva>> listarReservasPaginadas(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "") String termino) {
+
+        // Ordenamos para que las más recientes (ID mayor) salgan primero
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+        Page<Reserva> reservas = reservaRepository.buscarConPaginacion(termino, pageable);
+
+        return ResponseEntity.ok(reservas);
+    }
+
     @GetMapping("/exportar-pdf")
     public void exportarPDF(HttpServletResponse response) throws IOException {
         response.setContentType("application/pdf");
@@ -64,48 +82,37 @@ public class ReservaController {
     // ==========================================
 
     @PostMapping("/crear")
-    public ResponseEntity<?> crearReserva(@RequestBody ReservaDTO reservaDTO) {
-        try {
-            // Mandamos el DTO al Service para que haga toda la validación matemática
-            Reserva nuevaReserva = reservaService.crearReserva(reservaDTO);
+    public ResponseEntity<?> crearReserva(@RequestBody ReservaDTO reservaDTO) throws Exception {
+        // Mandamos el DTO al Service para que haga toda la validación matemática
+        Reserva nuevaReserva = reservaService.crearReserva(reservaDTO);
 
-            // Si todo sale bien, devolvemos la reserva creada con un código 200 OK
-            return ResponseEntity.ok("¡Reserva creada con éxito! ID asignado: " + nuevaReserva.getId());
-
-        } catch (Exception e) {
-            // Si el Service lanza un error (choca horario, área bloqueada, etc.)
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        // Si todo sale bien, devolvemos la reserva creada con un código 200 OK
+        return ResponseEntity.ok("¡Reserva creada con éxito! ID asignado: " + nuevaReserva.getId());
     }
 
     @PutMapping("/cancelar/{id}")
-    public ResponseEntity<?> cancelarReserva(@PathVariable Long id) {
+    public ResponseEntity<?> cancelarReserva(@PathVariable Long id) throws Exception {
         Map<String, Object> response = new HashMap<>();
-        try {
-            reservaService.cancelarReserva(id);
-            response.put("exito", true);
-            response.put("mensaje", "¡Reserva cancelada correctamente!");
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            response.put("exito", false);
-            response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
-        }
+        reservaService.cancelarReserva(id);
+        response.put("exito", true);
+        response.put("mensaje", "¡Reserva cancelada correctamente!");
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/actualizar/{id}")
-    public ResponseEntity<?> actualizarReserva(@PathVariable Long id, @RequestBody ReservaDTO reservaDTO) {
+    public ResponseEntity<?> actualizarReserva(@PathVariable Long id, @RequestBody ReservaDTO reservaDTO) throws Exception {
         Map<String, Object> response = new HashMap<>();
-        try {
-            Reserva actualizada = reservaService.actualizarReserva(id, reservaDTO);
-            response.put("exito", true);
-            response.put("mensaje", "¡Reserva actualizada correctamente!");
-            response.put("idReserva", actualizada.getId());
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            response.put("exito", false);
-            response.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
-        }
+        Reserva actualizada = reservaService.actualizarReserva(id, reservaDTO);
+        response.put("exito", true);
+        response.put("mensaje", "¡Reserva actualizada correctamente!");
+        response.put("idReserva", actualizada.getId());
+        return ResponseEntity.ok(response);
+    }
+
+    // NUEVO ENDPOINT PARA LA APP MÓVIL: Trae solo las reservas de un usuario específico
+    @GetMapping("/usuario/{idUsuario}")
+    public ResponseEntity<List<Reserva>> listarReservasPorUsuario(@PathVariable Long idUsuario) {
+        List<Reserva> misReservas = reservaRepository.findByUsuarioId(idUsuario);
+        return ResponseEntity.ok(misReservas);
     }
 }

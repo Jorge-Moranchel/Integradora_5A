@@ -20,6 +20,18 @@ public class RolService {
         return rolRepository.save(rol);
     }
 
+    // 👇 NUEVO MÉTODO PARA EDITAR EL ROL 👇
+    public Rol actualizar(Long id, Rol datosActualizados) {
+        Rol rolExistente = rolRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
+
+        rolExistente.setNombre(datosActualizados.getNombre());
+        rolExistente.setDescripcion(datosActualizados.getDescripcion());
+        // No actualizamos el estado aquí, de eso se encarga cambiarEstado()
+
+        return rolRepository.save(rolExistente);
+    }
+
     public void cambiarEstado(Long id) {
         Rol rol = rolRepository.findById(id).orElseThrow(() -> new RuntimeException("Rol no encontrado"));
         rol.setActivo(!rol.getActivo());

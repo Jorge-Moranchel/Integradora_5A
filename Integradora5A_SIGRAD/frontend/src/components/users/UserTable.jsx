@@ -1,8 +1,8 @@
 import React from 'react';
-import { Edit, Ban, Mail, Phone, GraduationCap, Shield, CircleCheck } from 'lucide-react';
+import { Edit, Mail, Phone, GraduationCap, Shield } from 'lucide-react';
 import Swal from 'sweetalert2';
 
-export default function UserTable({ users, onRefresh, onEdit }) {
+export default function UserTable({ users, isLoading, onRefresh, onEdit }) {
 
     const handleToggleStatus = async (id, nombre, estadoActual) => {
         const accion = estadoActual !== false ? 'bloquear' : 'activar';
@@ -28,8 +28,37 @@ export default function UserTable({ users, onRefresh, onEdit }) {
         }
     };
 
+    if (isLoading) {
+        return (
+            <div className="d-flex justify-content-center py-5 my-5">
+                <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}>
+                    <span className="visually-hidden">Cargando...</span>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="table-responsive">
+            {/* ESTILOS DEL SWITCH PARA QUE SEA IDÉNTICO AL DE CARRERAS */}
+            <style>
+                {`
+                .custom-switch {
+                    width: 48px !important;
+                    height: 24px !important;
+                    cursor: pointer;
+                    background-color: #dee2e6;
+                    border: none !important;
+                }
+                .custom-switch:checked {
+                    background-color: #10b981 !important;
+                }
+                .custom-switch:focus {
+                    box-shadow: none !important;
+                }
+                `}
+            </style>
+
             <table className="table table-hover align-middle mb-0">
                 <thead className="table-light">
                 <tr className="small text-muted text-uppercase fw-bold">
@@ -83,28 +112,33 @@ export default function UserTable({ users, onRefresh, onEdit }) {
                             </div>
                         </td>
 
-                        {/* ESTADO: Con efecto Glow */}
+                        {/* ESTADO: AHORA ES UN SWITCH */}
                         <td className="py-3 text-center">
-                            <span className={`status-badge ${user.estado !== false ? 'active' : 'blocked'}`}>
-                                <span className="status-dot"></span>
-                                {user.estado !== false ? 'Activo' : 'Bloqueado'}
-                            </span>
+                            <div className="d-flex flex-column align-items-center gap-1">
+                                <div className="form-check form-switch m-0 d-flex justify-content-center p-0">
+                                    <input
+                                        className="form-check-input custom-switch m-0"
+                                        type="checkbox"
+                                        role="switch"
+                                        checked={user.estado !== false}
+                                        onChange={() => handleToggleStatus(user.id, user.nombre, user.estado)}
+                                    />
+                                </div>
+                                <span className={`badge ${user.estado !== false ? 'bg-success bg-opacity-10 text-success' : 'bg-danger bg-opacity-10 text-danger'}`} style={{fontSize: '10px'}}>
+                                    {user.estado !== false ? 'ACTIVO' : 'BLOQUEADO'}
+                                </span>
+                            </div>
                         </td>
 
-                        {/* ACCIONES: Botones Azules y Rojos */}
+                        {/* ACCIONES: Solo el botón de Editar */}
                         <td className="pe-4 py-3 text-end">
-                            <div className="d-inline-flex gap-2">
-                                <button className="btn btn-outline-primary btn-sm border shadow-sm" onClick={() => onEdit(user)} title="Editar">
-                                    <Edit size={18} />
-                                </button>
-                                <button
-                                    className={`btn btn-sm border shadow-sm ${user.estado !== false ? 'btn-outline-danger' : 'btn-outline-success'}`}
-                                    onClick={() => handleToggleStatus(user.id, user.nombre, user.estado)}
-                                    title={user.estado !== false ? "Bloquear" : "Activar"}
-                                >
-                                    {user.estado !== false ? <Ban size={18}/> : <CircleCheck size={18}/>}
-                                </button>
-                            </div>
+                            <button
+                                className="btn btn-outline-primary btn-sm border shadow-sm"
+                                onClick={() => onEdit(user)}
+                                title="Editar"
+                            >
+                                <Edit size={18} />
+                            </button>
                         </td>
                     </tr>
                 ))}

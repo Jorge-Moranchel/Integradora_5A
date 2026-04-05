@@ -118,16 +118,16 @@ public class ReservaService {
         }
 
         // Buscar choques IGNORANDO la reserva que estamos editando (por su ID)
-        List<Reserva> reservasDelDia = reservaRepository.findByAreaIdAndFechaAndEstadoNotAndIdNot(
-                area.getId(), dto.getFecha(), "CANCELADA", id);
+        List<Reserva> conflictos = reservaRepository.findConflictingConfirmadasForUpdate(
+                area.getId(),
+                dto.getFecha(),
+                id,
+                dto.getHoraInicio(),
+                dto.getHoraFin()
+        );
 
-        for (Reserva otraReserva : reservasDelDia) {
-            LocalTime inicioExistente = LocalTime.parse(otraReserva.getHoraInicio());
-            LocalTime finExistente = LocalTime.parse(otraReserva.getHoraFin());
-
-            if (inicioNuevo.isBefore(finExistente) && finNuevo.isAfter(inicioExistente)) {
-                throw new Exception("¡Horario ocupado! Choca con otra reserva de " + otraReserva.getHoraInicio() + " a " + otraReserva.getHoraFin() + ".");
-            }
+        if (!conflictos.isEmpty()) {
+            throw new IllegalArgumentException("El horario seleccionado ya está ocupado para esta área");
         }
 
         // Si todo está bien, actualizamos los datos

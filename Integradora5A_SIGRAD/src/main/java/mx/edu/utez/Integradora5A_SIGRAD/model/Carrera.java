@@ -15,6 +15,9 @@ public class Carrera {
     @Column(columnDefinition = "NUMBER(1) default 1")
     private Boolean habilitada = true;
 
+    private String abreviatura;
+    private String descripcion;
+
     public Carrera() {}
 
     public Long getId() { return id; }
@@ -24,4 +27,10 @@ public class Carrera {
 
     public Boolean getHabilitada() { return habilitada; }
     public void setHabilitada(Boolean habilitada) { this.habilitada = habilitada; }
+
+    public String getAbreviatura() { return abreviatura; }
+    public void setAbreviatura(String abreviatura) { this.abreviatura = abreviatura; }
+
+    public String getDescripcion() { return descripcion; }
+    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
 }

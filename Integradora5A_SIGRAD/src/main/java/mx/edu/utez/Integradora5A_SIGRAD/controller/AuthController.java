@@ -1,12 +1,14 @@
 package mx.edu.utez.Integradora5A_SIGRAD.controller;
 
 import mx.edu.utez.Integradora5A_SIGRAD.model.Usuario;
+import mx.edu.utez.Integradora5A_SIGRAD.exception.ResourceNotFoundException;
+import mx.edu.utez.Integradora5A_SIGRAD.exception.UnauthorizedException;
 import mx.edu.utez.Integradora5A_SIGRAD.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Objects;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -25,38 +27,39 @@ public class AuthController {
         String password = request.get("password");
         Map<String, Object> response = new HashMap<>();
 
-        // 1. Validación: No dejar campos vacíos
         if (correo == null || correo.trim().isEmpty() || password == null || password.trim().isEmpty()) {
-            response.put("status", "error");
-            response.put("message", "Debes ingresar correo y contraseña para entrar.");
-            return ResponseEntity.badRequest().body(response);
+            throw new IllegalArgumentException("Debes ingresar correo y contraseña para entrar.");
         }
 
-        // 2. Buscar al usuario en la base de datos de Oracle
         Optional<Usuario> userOpt = usuarioRepository.findByEmailInstitucional(correo);
 
-        if (userOpt.isPresent()) {
-            Usuario user = userOpt.get();
-
-            // 3. Comparar contraseñas (Recuerda que estamos usando getters manuales)
-            if (user.getContrasena().equals(password)) {
-                response.put("status", "success");
-                response.put("message", "¡Bienvenido de nuevo, " + user.getNombre() + "!");
-                response.put("nombre", user.getNombre());
-                response.put("rol", user.getRol() != null ? user.getRol() : "ADMIN");
-
-                return ResponseEntity.ok(response);
-            } else {
-                // Contraseña incorrecta
-                response.put("status", "error");
-                response.put("message", "La contraseña es incorrecta. Intenta de nuevo.");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-            }
+        // 1. SEGURIDAD: Validamos que exista Y que la contraseña coincida en el mismo paso
+        if (!userOpt.isPresent() || !Objects.equals(userOpt.get().getContrasena(), password)) {
+            throw new UnauthorizedException("El correo y/o la contraseña son incorrectos.");
         }
 
-        // 4. Usuario no encontrado
-        response.put("status", "error");
-        response.put("message", "No existe una cuenta con ese correo institucional.");
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        Usuario user = userOpt.get();
+
+        if (user.getEstado() != null && !user.getEstado()) {
+            throw new UnauthorizedException("Tu cuenta ha sido bloqueada. Contacta a un administrador.");
+        }
+
+        if (user.getValidado() != null && !user.getValidado()) {
+            throw new UnauthorizedException("Tu cuenta aún no está activa. Revisa tu correo institucional y haz clic en el enlace de verificación.");
+        }
+
+        response.put("status", "success");
+        response.put("message", "¡Bienvenido de nuevo, " + user.getNombre() + "!");
+
+        // 2. PERFIL COMPLETO: Mandamos todos los datos a la app móvil de un solo golpe
+        response.put("id", user.getId());
+        response.put("nombre", user.getNombre());
+        response.put("rol", user.getRol() != null ? user.getRol() : "ADMIN");
+        response.put("matricula", user.getMatricula() != null ? user.getMatricula() : "");
+        response.put("telefono", user.getTelefono() != null ? user.getTelefono() : "");
+        response.put("carrera", user.getCarrera() != null ? user.getCarrera() : "");
+        response.put("emailInstitucional", user.getEmailInstitucional());
+
+        return ResponseEntity.ok(response);
     }
 }

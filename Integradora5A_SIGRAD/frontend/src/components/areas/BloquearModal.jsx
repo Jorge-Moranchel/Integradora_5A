@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
+import Swal from 'sweetalert2'; // Importación añadida
 
 export default function BloquearModal({ show, onClose, fetchAreas, areaId }) {
     const [formData, setFormData] = useState({
@@ -12,8 +13,14 @@ export default function BloquearModal({ show, onClose, fetchAreas, areaId }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
         if (formData.fechaInicioBloqueo > formData.fechaFinBloqueo) {
-            alert("La fecha de fin no puede ser menor a la de inicio.");
+            Swal.fire({
+                title: 'Error en Fechas',
+                text: 'La fecha de fin no puede ser menor a la de inicio.',
+                icon: 'error',
+                confirmButtonColor: '#ef4444'
+            });
             return;
         }
 
@@ -25,16 +32,22 @@ export default function BloquearModal({ show, onClose, fetchAreas, areaId }) {
             });
 
             if (response.ok) {
-                alert('Área bloqueada por mantenimiento');
+                Swal.fire({
+                    title: '¡Área Bloqueada!',
+                    text: 'La cancha ha sido puesta en mantenimiento correctamente.',
+                    icon: 'warning',
+                    confirmButtonColor: '#f59e0b',
+                    timer: 2500,
+                    showConfirmButton: false
+                });
                 fetchAreas();
                 onClose();
             } else {
                 const errorDelServidor = await response.text();
-                alert(`Fallo en el servidor (Código ${response.status}):\n${errorDelServidor}\n\nID enviado: ${areaId}`);
+                Swal.fire('Fallo en el servidor', errorDelServidor, 'error');
             }
         } catch (error) {
-            console.error(error);
-            alert('Error de conexión');
+            Swal.fire('Error', 'No se pudo conectar con el servidor.', 'error');
         }
     };
 
@@ -53,25 +66,38 @@ export default function BloquearModal({ show, onClose, fetchAreas, areaId }) {
 
                         <div className="mb-3">
                             <label className="form-label small fw-bold">Motivo del Mantenimiento *</label>
-                            <textarea required className="form-control bg-light border-0" rows="2"
-                                      onChange={(e) => setFormData({...formData, motivoBloqueo: e.target.value})}></textarea>
+                            <textarea
+                                required
+                                className="form-control bg-light border-0 shadow-none"
+                                rows="2"
+                                placeholder="Describa la razón del bloqueo..."
+                                onChange={(e) => setFormData({...formData, motivoBloqueo: e.target.value})}
+                            ></textarea>
                         </div>
                         <div className="row">
                             <div className="col-6 mb-3">
                                 <label className="form-label small fw-bold">Fecha Inicio *</label>
-                                <input type="date" required className="form-control bg-light border-0"
-                                       onChange={(e) => setFormData({...formData, fechaInicioBloqueo: e.target.value})} />
+                                <input
+                                    type="date"
+                                    required
+                                    className="form-control bg-light border-0 shadow-none"
+                                    onChange={(e) => setFormData({...formData, fechaInicioBloqueo: e.target.value})}
+                                />
                             </div>
                             <div className="col-6 mb-3">
                                 <label className="form-label small fw-bold">Fecha Fin *</label>
-                                <input type="date" required className="form-control bg-light border-0"
-                                       onChange={(e) => setFormData({...formData, fechaFinBloqueo: e.target.value})} />
+                                <input
+                                    type="date"
+                                    required
+                                    className="form-control bg-light border-0 shadow-none"
+                                    onChange={(e) => setFormData({...formData, fechaFinBloqueo: e.target.value})}
+                                />
                             </div>
                         </div>
                     </div>
                     <div className="modal-footer border-0 p-4 pt-0 d-flex gap-3">
                         <button type="button" className="btn btn-outline-secondary flex-grow-1 py-2 fw-bold" onClick={onClose}>Cancelar</button>
-                        <button type="submit" className="btn btn-danger flex-grow-1 py-2 fw-bold">Confirmar Bloqueo</button>
+                        <button type="submit" className="btn btn-danger flex-grow-1 py-2 fw-bold" style={{backgroundColor: '#ef4444', border: 'none'}}>Confirmar Bloqueo</button>
                     </div>
                 </form>
             </div>

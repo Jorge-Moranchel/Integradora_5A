@@ -1,7 +1,10 @@
-import React from 'react';
-import { MapPin, Clock, Edit, Trash2, Unlock } from 'lucide-react'; // Agregamos el ícono Unlock
+import React, { useState } from 'react';
+import { MapPin, Clock, Edit, Trash2, Unlock } from 'lucide-react';
 
 export default function AreaCard({ area, onBloquear, onDesbloquear, onEditar }) {
+    // 👇 Estado para saber si el área tiene foto o mostramos el ícono por defecto
+    const [imageError, setImageError] = useState(false);
+
     const getBadgeStyle = (estado) => {
         switch(estado?.toLowerCase()) {
             case 'disponible': return 'bg-success';
@@ -11,6 +14,9 @@ export default function AreaCard({ area, onBloquear, onDesbloquear, onEditar }) 
         }
     };
 
+    // 👇 URL optimizada que apunta a tu nueva ruta de Spring Boot
+    const imageUrl = `http://localhost:8080/api/areas/${area.id}/imagen`;
+
     return (
         <div className="card shadow-sm border-0 rounded-4 overflow-hidden h-100">
             <div className="bg-light d-flex align-items-center justify-content-center position-relative" style={{height: 180}}>
@@ -18,8 +24,14 @@ export default function AreaCard({ area, onBloquear, onDesbloquear, onEditar }) 
                     {area.estado ? area.estado.toUpperCase() : 'DISPONIBLE'}
                 </span>
 
-                {area.imagen ? (
-                    <img src={area.imagen} alt={area.nombre} style={{width: '100%', height: '100%', objectFit: 'cover'}} />
+                {/* 👇 LA MAGIA DE LA CARGA PEREZOSA 👇 */}
+                {!imageError ? (
+                    <img
+                        src={imageUrl}
+                        alt={area.nombre}
+                        style={{width: '100%', height: '100%', objectFit: 'cover'}}
+                        onError={() => setImageError(true)} // Si el backend dice "No hay foto", cambia al ícono
+                    />
                 ) : (
                     <MapPin size={48} className="text-muted opacity-25" />
                 )}
@@ -41,7 +53,6 @@ export default function AreaCard({ area, onBloquear, onDesbloquear, onEditar }) 
                         <Edit size={16}/> <small>Editar</small>
                     </button>
 
-                    {/* LA MAGIA: Condición para mostrar un botón u otro */}
                     {area.estado?.toLowerCase() === 'bloqueada' ? (
                         <button
                             className="btn btn-outline-success flex-grow-1 d-flex align-items-center justify-content-center gap-2 py-2"
