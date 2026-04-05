@@ -14,10 +14,10 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 
-//@Configuration
+@Configuration
 public class DataSeeder {
 
-    //@Bean
+    @Bean
     CommandLineRunner initDatabase(UsuarioRepository usuarioRepo, AreaRepository areaRepo, ReservaRepository reservaRepo) {
         return args -> {
             if (usuarioRepo.count() == 0) {
@@ -27,18 +27,21 @@ public class DataSeeder {
                 // ==========================================
                 Usuario u1 = new Usuario();
                 u1.setNombre("Osvaldo Enrique Meza"); u1.setMatricula("2024UTEZ001"); u1.setTelefono("7771112233");
-                u1.setCarrera("Desarrollo de Software"); u1.setEmailInstitucional("osv@utez.edu.mx");
+                u1.setCarrera("Desarrollo de Software"); u1.setEmailInstitucional("20243ds051@utez.edu.mx");
                 u1.setContrasena("12345"); u1.setRol("ADMIN"); u1.setEstado(true);
+                u1.setValidado(true); // ✅ Validado desde el inicio
 
                 Usuario u2 = new Usuario();
                 u2.setNombre("Jorge Emanuel Moranchel"); u2.setMatricula("2024UTEZ002"); u2.setTelefono("7774445566");
                 u2.setCarrera("Desarrollo de Software"); u2.setEmailInstitucional("jorge@utez.edu.mx");
                 u2.setContrasena("12345"); u2.setRol("ESTUDIANTE"); u2.setEstado(true);
+                u2.setValidado(true); // ✅ Validado desde el inicio
 
                 Usuario u3 = new Usuario();
                 u3.setNombre("Alan Gadiel Araujo"); u3.setMatricula("2024UTEZ003"); u3.setTelefono("7777778899");
                 u3.setCarrera("Redes Digitales"); u3.setEmailInstitucional("alan@utez.edu.mx");
                 u3.setContrasena("12345"); u3.setRol("DOCENTE"); u3.setEstado(true);
+                u3.setValidado(true); // ✅ Validado desde el inicio
 
                 usuarioRepo.saveAll(Arrays.asList(u1, u2, u3));
 
