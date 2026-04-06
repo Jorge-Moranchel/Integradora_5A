@@ -1,6 +1,5 @@
 package mx.edu.utez.Integradora5A_SIGRAD.dto;
 
-import java.util.List;
 import java.util.Map;
 
 public class DashboardDTO {
@@ -10,6 +9,9 @@ public class DashboardDTO {
     private int tasaOcupacion; // Porcentaje
     private Map<String, Long> reservasPorArea;
     private Map<String, Long> reservasPorMes;
+
+    private long reservasCompletadas;
+    private long reservasCanceladas;
 
     public long getReservasActivas() { return reservasActivas; }
     public void setReservasActivas(long reservasActivas) { this.reservasActivas = reservasActivas; }
@@ -28,4 +30,10 @@ public class DashboardDTO {
 
     public Map<String, Long> getReservasPorMes() { return reservasPorMes; }
     public void setReservasPorMes(Map<String, Long> reservasPorMes) { this.reservasPorMes = reservasPorMes; }
+
+    public long getReservasCompletadas() { return reservasCompletadas; }
+    public void setReservasCompletadas(long reservasCompletadas) { this.reservasCompletadas = reservasCompletadas; }
+
+    public long getReservasCanceladas() { return reservasCanceladas; }
+    public void setReservasCanceladas(long reservasCanceladas) { this.reservasCanceladas = reservasCanceladas; }
 }
