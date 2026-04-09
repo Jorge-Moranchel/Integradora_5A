@@ -9,7 +9,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -30,21 +29,15 @@ public class ReservaController {
 
     @Autowired
     private ReservaService reservaService;
-
-    // Inyectamos el repositorio y el servicio de PDF para los nuevos endpoints
     @Autowired
     private ReservaRepository reservaRepository;
-
     @Autowired
     private PdfExportService pdfExportService;
 
-    // ==========================================
-    // NUEVOS ENDPOINTS PARA FRONTEND E HISTORIAL
-    // ==========================================
-
     @GetMapping("/listar")
     public ResponseEntity<List<Reserva>> listarTodasLasReservas() {
-        // Traemos todas las reservas de la base de datos para mostrarlas en la tabla de React
+        // 👇 Disparamos la limpieza de estados antes de entregar datos 👇
+        reservaService.actualizarEstadosVencidos();
         List<Reserva> reservas = reservaRepository.findAll();
         return ResponseEntity.ok(reservas);
     }
@@ -55,7 +48,8 @@ public class ReservaController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "") String termino) {
 
-        // Ordenamos para que las más recientes (ID mayor) salgan primero
+        // 👇 Disparamos la limpieza de estados antes de entregar datos 👇
+        reservaService.actualizarEstadosVencidos();
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
         Page<Reserva> reservas = reservaRepository.buscarConPaginacion(termino, pageable);
 
@@ -64,6 +58,7 @@ public class ReservaController {
 
     @GetMapping("/exportar-pdf")
     public void exportarPDF(HttpServletResponse response) throws IOException {
+        reservaService.actualizarEstadosVencidos(); // <-- Actualizamos antes de exportar
         response.setContentType("application/pdf");
         DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
         String currentDateTime = dateFormatter.format(new Date());
@@ -72,21 +67,13 @@ public class ReservaController {
         String headerValue = "attachment; filename=historial_reservas_" + currentDateTime + ".pdf";
         response.setHeader(headerKey, headerValue);
 
-        // Obtenemos todas las reservas y generamos el PDF
         List<Reserva> listReservas = reservaRepository.findAll();
         pdfExportService.exportReservasToPdf(response, listReservas);
     }
 
-    // ==========================================
-    // TUS ENDPOINTS ORIGINALES (LÓGICA DE NEGOCIO)
-    // ==========================================
-
     @PostMapping("/crear")
     public ResponseEntity<?> crearReserva(@RequestBody ReservaDTO reservaDTO) throws Exception {
-        // Mandamos el DTO al Service para que haga toda la validación matemática
         Reserva nuevaReserva = reservaService.crearReserva(reservaDTO);
-
-        // Si todo sale bien, devolvemos la reserva creada con un código 200 OK
         return ResponseEntity.ok("¡Reserva creada con éxito! ID asignado: " + nuevaReserva.getId());
     }
 
@@ -109,9 +96,10 @@ public class ReservaController {
         return ResponseEntity.ok(response);
     }
 
-    // NUEVO ENDPOINT PARA LA APP MÓVIL: Trae solo las reservas de un usuario específico
     @GetMapping("/usuario/{idUsuario}")
     public ResponseEntity<List<Reserva>> listarReservasPorUsuario(@PathVariable Long idUsuario) {
+        // 👇 Disparamos la limpieza de estados antes de entregar datos 👇
+        reservaService.actualizarEstadosVencidos();
         List<Reserva> misReservas = reservaRepository.findByUsuarioId(idUsuario);
         return ResponseEntity.ok(misReservas);
     }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import StatCard from '../components/common/StatCard';
-import { Calendar, Users, TrendingUp } from 'lucide-react';
+// 👇 AQUÍ ESTABA EL ERROR: Faltaba importar CheckCircle y XCircle 👇
+import { Calendar, CheckCircle, XCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 export default function Dashboard() {
@@ -19,7 +20,6 @@ export default function Dashboard() {
     }).format(new Date());
 
     useEffect(() => {
-        // Asegúrate de que el puerto 8080 sea el correcto
         fetch('http://localhost:8080/api/dashboard/stats')
             .then(response => {
                 if (!response.ok) throw new Error('Error al conectar con el servidor');
@@ -35,7 +35,6 @@ export default function Dashboard() {
             });
     }, []);
 
-    // Transformación segura de datos (se añade || {} para evitar errores si viene null)
     const dataMeses = Object.entries(stats.reservasPorMes || {}).map(([mes, cantidad]) => ({
         mes,
         reservas: cantidad
@@ -64,23 +63,28 @@ export default function Dashboard() {
             ) : (
                 <>
                     <div className="row g-4 mb-5">
+                        {/* Tarjeta Activas (Tu azul actual) */}
                         <StatCard
                             title="Reservas Activas"
-                            value={stats.reservasActivas}
-                            subText={`Hoy: ${stats.reservasHoy}`}
+                            value={stats.reservasActivas || 0}
+                            subText={`Hoy: ${stats.reservasHoy || 0}`}
                             icon={<Calendar className="text-primary"/>}
                         />
+
+                        {/* NUEVA Tarjeta Completadas (Verde) */}
                         <StatCard
-                            title="Usuarios"
-                            value={stats.usuariosRegistrados}
-                            subText="Registrados"
-                            icon={<Users className="text-info"/>}
+                            title="Completadas"
+                            value={stats.reservasCompletadas || 0}
+                            subText="Histórico exitoso"
+                            icon={<CheckCircle className="text-success"/>}
                         />
+
+                        {/* NUEVA Tarjeta Canceladas (Rojo) */}
                         <StatCard
-                            title="Ocupación"
-                            value={`${stats.tasaOcupacion}%`}
-                            subText="Capacidad actual"
-                            icon={<TrendingUp className="text-warning"/>}
+                            title="Canceladas"
+                            value={stats.reservasCanceladas || 0}
+                            subText="Reservas anuladas"
+                            icon={<XCircle className="text-danger"/>}
                         />
                     </div>
 
