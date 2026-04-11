@@ -14,11 +14,20 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
 public class ReservaService {
+
+    private static final Pattern ISO_DATE_IN_TEXT = Pattern.compile("(\\d{4}-\\d{2}-\\d{2})");
 
     @Autowired private ReservaRepository reservaRepository;
     @Autowired private AreaRepository areaRepository;
@@ -48,6 +57,53 @@ public class ReservaService {
         }
         if (hayCambios) {
             reservaRepository.saveAll(confirmadas);
+        }
+    }
+
+    /**
+     * Exportación PDF: filtra en memoria parseando {@link Reserva#getFecha()} a {@link LocalDate},
+     * para que el rango sea correcto aunque en BD venga ISO, timestamp en texto o dd/MM/yyyy.
+     */
+    public List<Reserva> listarReservasParaExportPdf(LocalDate inicio, LocalDate fin) {
+        actualizarEstadosVencidos();
+        return reservaRepository.findAll().stream()
+                .filter(r -> parseFechaReserva(r.getFecha())
+                        .map(d -> !d.isBefore(inicio) && !d.isAfter(fin))
+                        .orElse(false))
+                .sorted(Comparator
+                        .comparing((Reserva r) -> parseFechaReserva(r.getFecha()).orElse(LocalDate.MIN)).reversed()
+                        .thenComparing(r -> r.getId() != null ? r.getId() : 0L, Comparator.reverseOrder()))
+                .collect(Collectors.toList());
+    }
+
+    private Optional<LocalDate> parseFechaReserva(String raw) {
+        if (raw == null) {
+            return Optional.empty();
+        }
+        String s = raw.trim();
+        if (s.isEmpty()) {
+            return Optional.empty();
+        }
+        Matcher iso = ISO_DATE_IN_TEXT.matcher(s);
+        if (iso.find()) {
+            try {
+                return Optional.of(LocalDate.parse(iso.group(1)));
+            } catch (DateTimeParseException ignored) {
+                // seguir
+            }
+        }
+        try {
+            return Optional.of(LocalDate.parse(s));
+        } catch (DateTimeParseException e) {
+            try {
+                return Optional.of(LocalDate.parse(s, DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+            } catch (DateTimeParseException e2) {
+                try {
+                    return Optional.of(LocalDate.parse(s, DateTimeFormatter.ofPattern("d/M/yyyy")));
+                } catch (DateTimeParseException e3) {
+                    return Optional.empty();
+                }
+            }
         }
     }
 

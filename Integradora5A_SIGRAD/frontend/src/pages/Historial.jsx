@@ -49,7 +49,97 @@ export default function Historial() {
     };
 
     const handleExport = () => {
-        window.open('http://localhost:8080/api/reservas/exportar-pdf', '_blank');
+        let rangoSeleccionado = null;
+
+        Swal.fire({
+            title: 'Exportar historial en PDF',
+            html: `
+                <div class="text-start px-1">
+                    <label class="form-label small fw-bold mb-1 d-block">Fecha de inicio</label>
+                    <input id="swal-fecha-inicio" type="date" class="form-control mb-3" />
+                    <label class="form-label small fw-bold mb-1 d-block">Fecha de fin</label>
+                    <input id="swal-fecha-fin" type="date" class="form-control" />
+                </div>
+            `,
+            width: '28rem',
+            showCancelButton: true,
+            cancelButtonText: 'Cancelar',
+            confirmButtonText: 'Confirmar',
+            reverseButtons: false,
+            confirmButtonColor: '#0d6efd',
+            cancelButtonColor: '#6c757d',
+            focusConfirm: false,
+            didOpen: () => {
+                const actions = Swal.getActions();
+                const cancelBtn = Swal.getCancelButton();
+                const confirmBtn = Swal.getConfirmButton();
+                if (actions && cancelBtn && confirmBtn) {
+                    actions.style.display = 'flex';
+                    actions.style.flexDirection = 'row';
+                    actions.style.justifyContent = 'center';
+                    actions.style.gap = '0.75rem';
+                    cancelBtn.style.order = '0';
+                    confirmBtn.style.order = '1';
+                }
+            },
+            preConfirm: () => {
+                const popup = Swal.getPopup();
+                const inicio = popup?.querySelector('#swal-fecha-inicio')?.value;
+                const fin = popup?.querySelector('#swal-fecha-fin')?.value;
+                if (!inicio || !fin) {
+                    Swal.showValidationMessage('Indica la fecha de inicio y la fecha de fin');
+                    return false;
+                }
+                if (inicio > fin) {
+                    Swal.showValidationMessage('La fecha de inicio no puede ser posterior a la fecha de fin');
+                    return false;
+                }
+                rangoSeleccionado = { inicio, fin };
+                return true;
+            }
+        }).then(async (result) => {
+            if (!result.isConfirmed || !rangoSeleccionado) return;
+            const { inicio, fin } = rangoSeleccionado;
+
+            try {
+                const res = await fetch('http://localhost:8080/api/reservas/exportar-pdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Accept: 'application/pdf' },
+                    body: JSON.stringify({ fechaInicio: inicio, fechaFin: fin })
+                });
+
+                if (!res.ok) {
+                    let msg = 'No se pudo generar el PDF';
+                    let titulo = 'Error';
+                    try {
+                        const text = await res.text();
+                        if (text) {
+                            try {
+                                const j = JSON.parse(text);
+                                msg = j.mensaje || j.message || text;
+                            } catch {
+                                msg = text;
+                            }
+                        }
+                        if (res.status === 404) titulo = 'Sin reservas';
+                    } catch (_) {}
+                    Swal.fire(titulo, msg, res.status === 404 ? 'info' : 'error');
+                    return;
+                }
+
+                const blob = await res.blob();
+                const href = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = href;
+                a.download = `historial_reservas_${inicio}_${fin}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(href);
+            } catch (e) {
+                Swal.fire('Error', 'No se pudo descargar el PDF. Revisa la conexión con el servidor.', 'error');
+            }
+        });
     };
 
     const abrirModalNuevaReserva = () => {
@@ -106,7 +196,6 @@ export default function Historial() {
                         className="btn btn-primary d-flex align-items-center gap-2 px-4 py-2 fw-bold shadow-sm"
                         style={{ borderRadius: '12px', border: 'none' }}
                         onClick={handleExport}
-                        disabled={totalElements === 0}
                     >
                         <Download size={20} /> Exportar
                     </button>

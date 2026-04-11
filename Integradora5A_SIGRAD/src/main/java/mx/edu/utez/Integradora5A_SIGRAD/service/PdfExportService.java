@@ -15,7 +15,8 @@ import java.util.List;
 @Service
 public class PdfExportService {
 
-    public void exportReservasToPdf(HttpServletResponse response, List<Reserva> reservas) throws IOException {
+    public void exportReservasToPdf(HttpServletResponse response, List<Reserva> reservas,
+                                  String fechaInicio, String fechaFin) throws IOException {
         Document document = new Document(PageSize.A4);
         PdfWriter.getInstance(document, response.getOutputStream());
 
@@ -29,6 +30,15 @@ public class PdfExportService {
         Paragraph p = new Paragraph("Historial de Reservas Deportivas\n", fontTitle);
         p.setAlignment(Paragraph.ALIGN_CENTER);
         document.add(p);
+
+        if (fechaInicio != null && fechaFin != null && !fechaInicio.isBlank() && !fechaFin.isBlank()) {
+            Font fontSub = FontFactory.getFont(FontFactory.HELVETICA);
+            fontSub.setSize(11);
+            fontSub.setColor(new Color(80, 80, 80));
+            Paragraph sub = new Paragraph("Del " + fechaInicio + " al " + fechaFin + "\n\n", fontSub);
+            sub.setAlignment(Paragraph.ALIGN_CENTER);
+            document.add(sub);
+        }
 
         // Tabla de datos (Ahora son 6 columnas)
         PdfPTable table = new PdfPTable(6);

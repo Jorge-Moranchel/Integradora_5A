@@ -7,6 +7,7 @@ import mx.edu.utez.Integradora5A_SIGRAD.repository.ReservaRepository;
 import mx.edu.utez.Integradora5A_SIGRAD.service.PdfExportService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
@@ -17,6 +18,8 @@ import org.springframework.data.domain.Sort;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -56,9 +59,50 @@ public class ReservaController {
         return ResponseEntity.ok(reservas);
     }
 
-    @GetMapping("/exportar-pdf")
-    public void exportarPDF(HttpServletResponse response) throws IOException {
-        reservaService.actualizarEstadosVencidos(); // <-- Actualizamos antes de exportar
+    /**
+     * POST + JSON: evita que el navegador ignore query params al abrir PDF en nueva pestaña
+     * y garantiza que fechaInicio / fechaFin lleguen tal cual al servidor.
+     */
+    @PostMapping(value = "/exportar-pdf", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public void exportarPDF(@RequestBody Map<String, String> body, HttpServletResponse response) throws IOException {
+        if (body == null) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Cuerpo JSON requerido");
+            return;
+        }
+        String fechaInicio = body.get("fechaInicio");
+        String fechaFin = body.get("fechaFin");
+        if (fechaInicio == null || fechaFin == null || fechaInicio.isBlank() || fechaFin.isBlank()) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "fechaInicio y fechaFin son obligatorias");
+            return;
+        }
+
+        LocalDate inicio;
+        LocalDate fin;
+        try {
+            inicio = LocalDate.parse(fechaInicio.trim());
+            fin = LocalDate.parse(fechaFin.trim());
+        } catch (DateTimeParseException e) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Usa fechas en formato yyyy-MM-dd");
+            return;
+        }
+
+        if (inicio.isAfter(fin)) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "La fecha de inicio no puede ser posterior a la fecha fin");
+            return;
+        }
+
+        String desde = inicio.toString();
+        String hasta = fin.toString();
+        List<Reserva> listReservas = reservaService.listarReservasParaExportPdf(inicio, fin);
+        if (listReservas.isEmpty()) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write(
+                    "{\"mensaje\":\"No hay reservas registradas entre las fechas seleccionadas.\"}");
+            return;
+        }
+
         response.setContentType("application/pdf");
         DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
         String currentDateTime = dateFormatter.format(new Date());
@@ -67,8 +111,7 @@ public class ReservaController {
         String headerValue = "attachment; filename=historial_reservas_" + currentDateTime + ".pdf";
         response.setHeader(headerKey, headerValue);
 
-        List<Reserva> listReservas = reservaRepository.findAll();
-        pdfExportService.exportReservasToPdf(response, listReservas);
+        pdfExportService.exportReservasToPdf(response, listReservas, desde, hasta);
     }
 
     @PostMapping("/crear")
