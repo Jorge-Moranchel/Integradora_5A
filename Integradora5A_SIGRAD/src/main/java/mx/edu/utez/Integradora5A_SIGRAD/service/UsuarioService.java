@@ -2,7 +2,9 @@ package mx.edu.utez.Integradora5A_SIGRAD.service;
 
 import mx.edu.utez.Integradora5A_SIGRAD.dto.UsuarioDTO;
 import mx.edu.utez.Integradora5A_SIGRAD.exception.EmailAlreadyExistsException;
+import mx.edu.utez.Integradora5A_SIGRAD.model.Division;
 import mx.edu.utez.Integradora5A_SIGRAD.model.Usuario;
+import mx.edu.utez.Integradora5A_SIGRAD.repository.DivisionRepository;
 import mx.edu.utez.Integradora5A_SIGRAD.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +21,9 @@ public class UsuarioService {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private DivisionRepository divisionRepository;
 
     @Autowired
     private JavaMailSender mailSender;
@@ -49,6 +54,8 @@ public class UsuarioService {
                 rol = "ESTUDIANTE";
             } else if (rol.equalsIgnoreCase("Docente")) {
                 rol = "DOCENTE";
+            } else if (rol.equalsIgnoreCase("Administrativo")) {
+                rol = "ADMINISTRATIVO";
             }
         }
 
@@ -72,7 +79,18 @@ public class UsuarioService {
         usuario.setNombre(dto.getNombre().trim());
         usuario.setMatricula(dto.getMatricula() != null ? dto.getMatricula().trim() : null);
         usuario.setTelefono(dto.getTelefono());
-        usuario.setCarrera(dto.getCarrera());
+        if ("ADMINISTRATIVO".equalsIgnoreCase(rol)) {
+            String divNombre = dto.getCarrera() != null ? dto.getCarrera().trim() : "";
+            if (divNombre.isEmpty()) {
+                throw new IllegalArgumentException("La división académica es obligatoria para ADMINISTRATIVO");
+            }
+            Division division = divisionRepository.findByNombreIgnoreCaseAndHabilitadaTrue(divNombre)
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Seleccione una división académica válida y habilitada."));
+            usuario.setCarrera(division.getNombre());
+        } else {
+            usuario.setCarrera(dto.getCarrera());
+        }
         usuario.setEmailInstitucional(email);
         usuario.setContrasena(dto.getContrasena());
         usuario.setRol(rol); // Guardamos el rol ya traducido

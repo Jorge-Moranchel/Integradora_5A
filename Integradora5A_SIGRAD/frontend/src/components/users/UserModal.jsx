@@ -13,6 +13,7 @@ export default function UserModal({ show, onClose, userToEdit }) {
   const [showPass, setShowPass] = useState(false);
   const [listaCarreras, setListaCarreras] = useState([]);
   const [listaRoles, setListaRoles] = useState([]);
+  const [listaDivisiones, setListaDivisiones] = useState([]);
 
   useEffect(() => {
     if (show) {
@@ -33,12 +34,15 @@ export default function UserModal({ show, onClose, userToEdit }) {
 
   const cargarCatalogos = async () => {
     try {
-      const [resC, resR] = await Promise.all([
+      const [resC, resR, resD] = await Promise.all([
         fetch('http://localhost:8080/api/carreras/listar'),
-        fetch('http://localhost:8080/api/roles')
+        fetch('http://localhost:8080/api/roles'),
+        fetch('http://localhost:8080/api/divisiones/listar')
       ]);
-      setListaCarreras(await resC.json());
-      setListaRoles(await resR.json());
+      const [dataC, dataR, dataD] = await Promise.all([resC.json(), resR.json(), resD.json()]);
+      setListaCarreras(Array.isArray(dataC) ? dataC : []);
+      setListaRoles(Array.isArray(dataR) ? dataR : []);
+      setListaDivisiones(Array.isArray(dataD) ? dataD : []);
     } catch (e) { console.error(e); }
   };
 
@@ -151,11 +155,22 @@ export default function UserModal({ show, onClose, userToEdit }) {
                            placeholder="Ej. 7771234567" />
                   </div>
                   <div className="col-md-6">
-                    <label className="form-label small fw-bold">Carrera *</label>
-                    <select className="form-select bg-light border-0" value={carrera} onChange={(e) => setCarrera(e.target.value)} required>
-                      <option value="">Seleccionar carrera...</option>
-                      {listaCarreras.map(c => <option key={c.id} value={c.nombre}>{c.nombre}</option>)}
-                    </select>
+                    <label className="form-label small fw-bold">
+                      {(rol || '').toUpperCase() === 'ADMINISTRATIVO' ? 'División académica *' : 'Carrera *'}
+                    </label>
+                    {(rol || '').toUpperCase() === 'ADMINISTRATIVO' ? (
+                      <select className="form-select bg-light border-0" value={carrera} onChange={(e) => setCarrera(e.target.value)} required>
+                        <option value="">Seleccionar división...</option>
+                        {listaDivisiones.filter((d) => d.habilitada).map((d) => (
+                          <option key={d.id} value={d.nombre}>{d.nombre}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <select className="form-select bg-light border-0" value={carrera} onChange={(e) => setCarrera(e.target.value)} required>
+                        <option value="">Seleccionar carrera...</option>
+                        {listaCarreras.map(c => <option key={c.id} value={c.nombre}>{c.nombre}</option>)}
+                      </select>
+                    )}
                   </div>
                 </div>
 
