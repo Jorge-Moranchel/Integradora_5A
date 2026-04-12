@@ -1,9 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import Swal from 'sweetalert2';
 
 export default function ReservaModal({ show, onClose, onSuccess, reservaAEditar }) {
     const [listaAreas, setListaAreas] = useState([]);
     const [listaUsuarios, setListaUsuarios] = useState([]);
+    const [busquedaUsuario, setBusquedaUsuario] = useState('');
+    const [usuarioMenuAbierto, setUsuarioMenuAbierto] = useState(false);
+    const usuarioComboRef = useRef(null);
+    const busquedaUsuarioInputRef = useRef(null);
 
     const [idArea, setIdArea] = useState('');
     const [idUsuario, setIdUsuario] = useState('');
@@ -16,6 +20,48 @@ export default function ReservaModal({ show, onClose, onSuccess, reservaAEditar 
         if (!show) return;
         cargarCatalogos();
     }, [show]);
+
+    useEffect(() => {
+        if (!show) {
+            setBusquedaUsuario('');
+            setUsuarioMenuAbierto(false);
+        }
+    }, [show]);
+
+    useEffect(() => {
+        if (!usuarioMenuAbierto) return;
+        const onDoc = (ev) => {
+            if (usuarioComboRef.current && !usuarioComboRef.current.contains(ev.target)) {
+                setUsuarioMenuAbierto(false);
+            }
+        };
+        document.addEventListener('mousedown', onDoc);
+        return () => document.removeEventListener('mousedown', onDoc);
+    }, [usuarioMenuAbierto]);
+
+    useEffect(() => {
+        if (usuarioMenuAbierto) {
+            queueMicrotask(() => busquedaUsuarioInputRef.current?.focus());
+        }
+    }, [usuarioMenuAbierto]);
+
+    const usuarioSeleccionado = useMemo(
+        () => listaUsuarios.find((u) => String(u.id) === String(idUsuario)),
+        [listaUsuarios, idUsuario]
+    );
+
+    const usuariosFiltrados = useMemo(() => {
+        const q = busquedaUsuario.trim().toLowerCase();
+        if (!q) return listaUsuarios;
+        return listaUsuarios.filter((u) => {
+            if (idUsuario && String(u.id) === String(idUsuario)) return true;
+            const nombre = (u.nombre || '').toLowerCase();
+            const matricula = (u.matricula || '').toLowerCase();
+            const email = (u.emailInstitucional || '').toLowerCase();
+            const rol = (u.rol || '').toLowerCase();
+            return nombre.includes(q) || matricula.includes(q) || email.includes(q) || rol.includes(q);
+        });
+    }, [listaUsuarios, busquedaUsuario, idUsuario]);
 
     useEffect(() => {
         if (!show) return;
@@ -59,10 +105,16 @@ export default function ReservaModal({ show, onClose, onSuccess, reservaAEditar 
         setHoraInicio('');
         setHoraFin('');
         setDescripcion('');
+        setBusquedaUsuario('');
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (!idUsuario) {
+            Swal.fire('Atención', 'Selecciona un usuario', 'warning');
+            return;
+        }
 
         const esEdicion = !!reservaAEditar;
         const url = esEdicion
@@ -110,6 +162,14 @@ export default function ReservaModal({ show, onClose, onSuccess, reservaAEditar 
 
     if (!show) return null;
 
+    const estadoVista = reservaAEditar?.estado || 'CONFIRMADA';
+    const estadoBadgeClass =
+        estadoVista === 'CONFIRMADA'
+            ? 'bg-success bg-opacity-10 text-success'
+            : estadoVista === 'CANCELADA'
+              ? 'bg-danger bg-opacity-10 text-danger'
+              : 'bg-secondary bg-opacity-10 text-secondary';
+
     return (
         <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
             <div className="modal-dialog modal-lg modal-dialog-centered">
@@ -138,21 +198,84 @@ export default function ReservaModal({ show, onClose, onSuccess, reservaAEditar 
                                         ))}
                                     </select>
                                 </div>
-                                <div className="col-md-6">
-                                    <label className="form-label fw-bold small">Usuario *</label>
-                                    <select
-                                        className="form-select bg-light border-0"
-                                        value={idUsuario}
-                                        onChange={(e) => setIdUsuario(e.target.value)}
-                                        required
+                                <div className="col-md-6 position-relative" ref={usuarioComboRef}>
+                                    <label className="form-label fw-bold small" id="label-usuario-reserva">
+                                        Usuario *
+                                    </label>
+                                    <button
+                                        type="button"
+                                        className={`form-select bg-light border-0 text-start text-wrap ${!idUsuario ? 'text-muted' : ''}`}
+                                        style={{ whiteSpace: 'normal', wordBreak: 'break-word', minHeight: '2.5rem' }}
+                                        onClick={() => {
+                                            setUsuarioMenuAbierto((o) => {
+                                                const next = !o;
+                                                if (next) setBusquedaUsuario('');
+                                                return next;
+                                            });
+                                        }}
+                                        aria-expanded={usuarioMenuAbierto}
+                                        aria-haspopup="listbox"
+                                        aria-labelledby="label-usuario-reserva"
                                     >
-                                        <option value="">Seleccionar usuario...</option>
-                                        {listaUsuarios.map((u) => (
-                                            <option key={u.id} value={u.id}>
-                                                {u.nombre} {u.matricula ? `- ${u.matricula}` : ''}
-                                            </option>
-                                        ))}
-                                    </select>
+                                        {usuarioSeleccionado
+                                            ? `${usuarioSeleccionado.nombre}${usuarioSeleccionado.matricula ? ` — ${usuarioSeleccionado.matricula}` : ''}`
+                                            : 'Seleccionar usuario...'}
+                                    </button>
+                                    {usuarioMenuAbierto && (
+                                        <div
+                                            className="position-absolute start-0 end-0 mt-1 rounded-3 border bg-white shadow overflow-hidden"
+                                            style={{
+                                                zIndex: 2000,
+                                                maxHeight: 'min(280px, 50vh)',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                minWidth: 0
+                                            }}
+                                            role="listbox"
+                                        >
+                                            <div className="p-2 border-bottom bg-light rounded-top-3">
+                                                <input
+                                                    ref={busquedaUsuarioInputRef}
+                                                    type="search"
+                                                    className="form-control form-control-sm border-0 bg-white"
+                                                    placeholder="Buscar por nombre, matrícula, correo o rol..."
+                                                    value={busquedaUsuario}
+                                                    onChange={(e) => setBusquedaUsuario(e.target.value)}
+                                                    autoComplete="off"
+                                                    aria-label="Buscar usuario"
+                                                    onMouseDown={(e) => e.stopPropagation()}
+                                                />
+                                            </div>
+                                            <div
+                                                className="overflow-y-auto overflow-x-hidden py-1 rounded-bottom-3"
+                                                style={{ minWidth: 0, maxWidth: '100%' }}
+                                            >
+                                                {usuariosFiltrados.length === 0 ? (
+                                                    <div className="px-3 py-2 small text-muted text-wrap">Sin coincidencias</div>
+                                                ) : (
+                                                    usuariosFiltrados.map((u) => (
+                                                        <button
+                                                            key={u.id}
+                                                            type="button"
+                                                            role="option"
+                                                            aria-selected={String(u.id) === String(idUsuario)}
+                                                            className="dropdown-item py-2 px-3 small text-start text-wrap text-break w-100"
+                                                            style={{ whiteSpace: 'normal', wordBreak: 'break-word' }}
+                                                            onMouseDown={(e) => e.preventDefault()}
+                                                            onClick={() => {
+                                                                setIdUsuario(String(u.id));
+                                                                setUsuarioMenuAbierto(false);
+                                                                setBusquedaUsuario('');
+                                                            }}
+                                                        >
+                                                            {u.nombre}
+                                                            {u.matricula ? ` — ${u.matricula}` : ''}
+                                                        </button>
+                                                    ))
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -202,9 +325,21 @@ export default function ReservaModal({ show, onClose, onSuccess, reservaAEditar 
 
                             <div className="mb-2">
                                 <label className="form-label fw-bold small">Estado</label>
-                                <select className="form-select bg-light border-0" value="CONFIRMADA" disabled>
-                                    <option value="CONFIRMADA">CONFIRMADA</option>
-                                </select>
+                                <div className="d-flex flex-column gap-1">
+                                    <span
+                                        className={`badge ${estadoBadgeClass} fw-bold align-self-start`}
+                                        style={{ fontSize: '11px', letterSpacing: '0.5px' }}
+                                    >
+                                        {estadoVista}
+                                    </span>
+                                    {!reservaAEditar && (
+                                        <p className="text-muted small mb-0">
+                                            Al crear la reserva queda <strong>confirmada</strong>. No se puede dar de alta como
+                                            completada o cancelada: lo completa el sistema cuando pasa la fecha/hora, y cancelar
+                                            solo se hace desde el historial.
+                                        </p>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
