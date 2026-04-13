@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import StatCard from '../components/common/StatCard';
-// 👇 AQUÍ ESTABA EL ERROR: Faltaba importar CheckCircle y XCircle 👇
 import { Calendar, CheckCircle, XCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
@@ -62,30 +61,32 @@ export default function Dashboard() {
                 </div>
             ) : (
                 <>
-                    <div className="row g-4 mb-5">
-                        {/* Tarjeta Activas (Tu azul actual) */}
-                        <StatCard
-                            title="Reservas Activas"
-                            value={stats.reservasActivas || 0}
-                            subText={`Hoy: ${stats.reservasHoy || 0}`}
-                            icon={<Calendar className="text-primary"/>}
-                        />
-
-                        {/* NUEVA Tarjeta Completadas (Verde) */}
-                        <StatCard
-                            title="Completadas"
-                            value={stats.reservasCompletadas || 0}
-                            subText="Histórico exitoso"
-                            icon={<CheckCircle className="text-success"/>}
-                        />
-
-                        {/* NUEVA Tarjeta Canceladas (Rojo) */}
-                        <StatCard
-                            title="Canceladas"
-                            value={stats.reservasCanceladas || 0}
-                            subText="Reservas anuladas"
-                            icon={<XCircle className="text-danger"/>}
-                        />
+                    {/* ✅ CAMBIO: row-cols-3 fuerza las 3 tarjetas en una sola fila */}
+                    <div className="row row-cols-3 g-4 mb-5">
+                        <div className="col">
+                            <StatCard
+                                title="Reservas Activas"
+                                value={stats.reservasActivas || 0}
+                                subText={`Hoy: ${stats.reservasHoy || 0}`}
+                                icon={<Calendar className="text-primary"/>}
+                            />
+                        </div>
+                        <div className="col">
+                            <StatCard
+                                title="Completadas"
+                                value={stats.reservasCompletadas || 0}
+                                subText="Histórico exitoso"
+                                icon={<CheckCircle className="text-success"/>}
+                            />
+                        </div>
+                        <div className="col">
+                            <StatCard
+                                title="Canceladas"
+                                value={stats.reservasCanceladas || 0}
+                                subText="Reservas anuladas"
+                                icon={<XCircle className="text-danger"/>}
+                            />
+                        </div>
                     </div>
 
                     <div className="row g-4 mb-4">
