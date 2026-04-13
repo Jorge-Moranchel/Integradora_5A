@@ -10,14 +10,11 @@ export default function Historial() {
     const [showModal, setShowModal] = useState(false);
     const [reservaAEditar, setReservaAEditar] = useState(null);
 
-    // 👇 ESTADOS DE PAGINACIÓN BACKEND (Spring Boot empieza en página 0) 👇
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [totalElements, setTotalElements] = useState(0);
 
-    // Cada vez que cambie la página o la búsqueda, llamamos al backend
     useEffect(() => {
-        // Un pequeño retraso (debounce) para no saturar el backend si escriben muy rápido en el buscador
         const delayDebounceFn = setTimeout(() => {
             fetchReservas();
         }, 300);
@@ -27,11 +24,10 @@ export default function Historial() {
     const fetchReservas = async () => {
         setLoading(true);
         try {
-            // Mandamos los parámetros exactos a nuestro nuevo endpoint de Spring Boot
             const response = await fetch(`http://localhost:8080/api/reservas/paginadas?page=${currentPage}&size=10&termino=${busqueda}`);
             if (response.ok) {
                 const data = await response.json();
-                setReservas(data.content); // Spring Boot guarda la lista dentro de "content"
+                setReservas(data.content);
                 setTotalPages(data.totalPages);
                 setTotalElements(data.totalElements);
             }
@@ -42,7 +38,6 @@ export default function Historial() {
         }
     };
 
-    // Si el usuario escribe en el buscador, lo regresamos a la página 1 (índice 0)
     const handleBusquedaChange = (e) => {
         setBusqueda(e.target.value);
         setCurrentPage(0);
@@ -257,9 +252,11 @@ export default function Historial() {
                                         <td className="text-center">
                                             <span className={`badge ${
                                                 reserva.estado === 'CONFIRMADA' ? 'bg-success bg-opacity-10 text-success' :
-                                                    reserva.estado === 'CANCELADA' ? 'bg-danger bg-opacity-10 text-danger' : 'bg-secondary bg-opacity-10 text-secondary'
-                                            }`} style={{ fontSize: '11px', letterSpacing: '0.5px' }}>
-                                                {reserva.estado}
+                                                    reserva.estado === 'CANCELADA'  ? 'bg-danger bg-opacity-10 text-danger'  :
+                                                        'bg-secondary bg-opacity-10 text-secondary'
+                                            }`} style={{ fontSize: '11px', letterSpacing: '0.5px', minWidth: '90px', display: 'inline-block', textAlign: 'center' }}>
+                                                {reserva.estado === 'CONFIRMADA' ? 'Activo' :
+                                                    reserva.estado === 'CANCELADA'  ? 'Cancelado' : 'Finalizado'}
                                             </span>
                                         </td>
                                         <td className="text-center pe-4">
@@ -267,8 +264,7 @@ export default function Historial() {
                                                 <button
                                                     className="btn btn-sm btn-light border-0 p-2 shadow-sm rounded-3 text-primary"
                                                     onClick={() => abrirModalEditarReserva(reserva)}
-                                                    disabled={reserva.estado === 'COMPLETADA' || reserva.estado === 'CANCELADA'}
-                                                    title={reserva.estado === 'COMPLETADA' || reserva.estado === 'CANCELADA' ? 'Solo se pueden editar reservas CONFIRMADAS' : 'Editar reserva'}
+                                                    title={reserva.estado === 'CONFIRMADA' ? 'Editar reserva' : 'Ver detalle de reserva'}
                                                 >
                                                     <Edit size={16} />
                                                 </button>
@@ -293,7 +289,6 @@ export default function Historial() {
                             </table>
                         </div>
 
-                        {/* 👇 PAGINADOR CONECTADO AL BACKEND 👇 */}
                         {totalPages > 1 && (
                             <div className="d-flex justify-content-between align-items-center mt-4 pt-3 border-top border-light">
                                 <span className="text-muted small">
