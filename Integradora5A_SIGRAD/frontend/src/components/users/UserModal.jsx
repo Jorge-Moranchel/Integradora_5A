@@ -8,12 +8,15 @@ export default function UserModal({ show, onClose, userToEdit }) {
   const [telefono, setTelefono] = useState('');
   const [email, setEmail] = useState('');
   const [carrera, setCarrera] = useState('');
+  const [division, setDivision] = useState('');
   const [rol, setRol] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [listaCarreras, setListaCarreras] = useState([]);
   const [listaRoles, setListaRoles] = useState([]);
   const [listaDivisiones, setListaDivisiones] = useState([]);
+
+  const esEstudiante = (rol || '').toUpperCase() === 'ESTUDIANTE';
 
   useEffect(() => {
     if (show) {
@@ -24,6 +27,7 @@ export default function UserModal({ show, onClose, userToEdit }) {
         setTelefono(userToEdit.telefono || '');
         setEmail(userToEdit.emailInstitucional);
         setCarrera(userToEdit.carrera || '');
+        setDivision(userToEdit.division || '');
         setRol(userToEdit.rol || '');
         setPassword('');
       } else {
@@ -48,7 +52,7 @@ export default function UserModal({ show, onClose, userToEdit }) {
 
   const limpiarCampos = () => {
     setNombre(''); setMatricula(''); setTelefono(''); setEmail('');
-    setCarrera(''); setRol(''); setPassword('');
+    setCarrera(''); setDivision(''); setRol(''); setPassword('');
   };
 
   const handleSubmit = async (e) => {
@@ -64,7 +68,7 @@ export default function UserModal({ show, onClose, userToEdit }) {
       return;
     }
 
-    if ((rol || '').toUpperCase() === 'ESTUDIANTE') {
+    if (esEstudiante) {
       const prefijoCorreo = (email || '').split('@')[0] || '';
       const mat = (matricula || '').trim();
       if (!prefijoCorreo || !mat || mat.toLowerCase() !== prefijoCorreo.toLowerCase()) {
@@ -75,11 +79,13 @@ export default function UserModal({ show, onClose, userToEdit }) {
       }
     }
 
+    const carreraFinal = esEstudiante ? carrera : division;
+
     try {
       const response = await fetch(url, {
         method: method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre, matricula, telefono, carrera, emailInstitucional: email, contrasena: password, rol }),
+        body: JSON.stringify({ nombre, matricula, telefono, carrera: carreraFinal, emailInstitucional: email, contrasena: password, rol }),
       });
 
       if (response.ok) {
@@ -114,6 +120,8 @@ export default function UserModal({ show, onClose, userToEdit }) {
             </div>
             <form onSubmit={handleSubmit}>
               <div className="modal-body p-4">
+
+                {/* Fila 1: Nombre y Rol */}
                 <div className="row mb-3">
                   <div className="col-md-6">
                     <label className="form-label small fw-bold">Nombre Completo *</label>
@@ -123,21 +131,23 @@ export default function UserModal({ show, onClose, userToEdit }) {
                   </div>
                   <div className="col-md-6">
                     <label className="form-label small fw-bold">Rol *</label>
-                    <select className="form-select bg-light border-0" value={rol} onChange={(e) => setRol(e.target.value)} required>
+                    <select className="form-select bg-light border-0" value={rol}
+                            onChange={(e) => { setRol(e.target.value); setCarrera(''); setDivision(''); }} required>
                       <option value="">Seleccionar rol...</option>
                       {listaRoles.filter(r => r.activo).map(r => <option key={r.id} value={r.nombre}>{r.nombre}</option>)}
                     </select>
                   </div>
                 </div>
 
+                {/* Fila 2: Matrícula/Código y Correo */}
                 <div className="row mb-3">
                   <div className="col-md-6">
                     <label className="form-label small fw-bold">
-                      {(rol || '').toUpperCase() === 'ESTUDIANTE' ? 'Matrícula *' : 'Código de Trabajador *'}
+                      {esEstudiante ? 'Matrícula *' : 'Código de Trabajador *'}
                     </label>
                     <input type="text" className="form-control bg-light border-0"
                            value={matricula} onChange={(e) => setMatricula(e.target.value.toUpperCase())}
-                           placeholder={(rol || '').toUpperCase() === 'ESTUDIANTE' ? 'Ej. 20243DS059' : 'Ej. 12345'} required />
+                           placeholder={esEstudiante ? 'Ej. 20243DS059' : 'Ej. 12345'} required />
                   </div>
                   <div className="col-md-6">
                     <label className="form-label small fw-bold">Correo Institucional *</label>
@@ -147,6 +157,7 @@ export default function UserModal({ show, onClose, userToEdit }) {
                   </div>
                 </div>
 
+                {/* Fila 3: Teléfono y División (siempre) */}
                 <div className="row mb-3">
                   <div className="col-md-6">
                     <label className="form-label small fw-bold">Teléfono</label>
@@ -155,28 +166,35 @@ export default function UserModal({ show, onClose, userToEdit }) {
                            placeholder="Ej. 7771234567" />
                   </div>
                   <div className="col-md-6">
-                    <label className="form-label small fw-bold">
-                      {(rol || '').toUpperCase() === 'ADMINISTRATIVO' ? 'División académica *' : 'Carrera *'}
-                    </label>
-                    {(rol || '').toUpperCase() === 'ADMINISTRATIVO' ? (
-                      <select className="form-select bg-light border-0" value={carrera} onChange={(e) => setCarrera(e.target.value)} required>
-                        <option value="">Seleccionar división...</option>
-                        {listaDivisiones.filter((d) => d.habilitada).map((d) => (
+                    <label className="form-label small fw-bold">División académica *</label>
+                    <select className="form-select bg-light border-0" value={division}
+                            onChange={(e) => setDivision(e.target.value)} required>
+                      <option value="">Seleccionar división...</option>
+                      {listaDivisiones.filter((d) => d.habilitada).map((d) => (
                           <option key={d.id} value={d.nombre}>{d.nombre}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <select className="form-select bg-light border-0" value={carrera} onChange={(e) => setCarrera(e.target.value)} required>
-                        <option value="">Seleccionar carrera...</option>
-                        {listaCarreras.map(c => <option key={c.id} value={c.nombre}>{c.nombre}</option>)}
-                      </select>
-                    )}
+                      ))}
+                    </select>
                   </div>
                 </div>
 
+                {/* Fila 4: Carrera (solo ESTUDIANTE) y Contraseña — siempre de dos en dos */}
                 <div className="row mb-3">
-                  <div className="col-md-6">
-                    <label className="form-label small fw-bold">{userToEdit ? 'Nueva Contraseña (Opcional)' : 'Contraseña *'}</label>
+                  {esEstudiante && (
+                      <div className="col-md-6">
+                        <label className="form-label small fw-bold">Carrera *</label>
+                        <select className="form-select bg-light border-0" value={carrera}
+                                onChange={(e) => setCarrera(e.target.value)} required>
+                          <option value="">Seleccionar carrera...</option>
+                          {listaCarreras.map(c => (
+                              <option key={c.id} value={c.nombre}>{c.nombre}</option>
+                          ))}
+                        </select>
+                      </div>
+                  )}
+                  <div className={esEstudiante ? 'col-md-6' : 'col-md-6'}>
+                    <label className="form-label small fw-bold">
+                      {userToEdit ? 'Nueva Contraseña (Opcional)' : 'Contraseña *'}
+                    </label>
                     <div className="input-group">
                       <input type={showPass ? "text" : "password"} className="form-control bg-light border-0"
                              value={password} onChange={(e) => setPassword(e.target.value)}
@@ -187,6 +205,7 @@ export default function UserModal({ show, onClose, userToEdit }) {
                     </div>
                   </div>
                 </div>
+
               </div>
               <div className="modal-footer border-0 p-4 pt-0">
                 <button type="button" className="btn btn-outline-secondary flex-grow-1" style={{ borderRadius: '10px' }} onClick={onClose}>
