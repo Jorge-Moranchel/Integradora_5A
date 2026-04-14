@@ -121,8 +121,7 @@ export default function Divisiones() {
                             <table className="table table-hover align-middle">
                                 <thead>
                                 <tr className="small text-muted text-uppercase" style={{ letterSpacing: '1px' }}>
-                                    <th className="ps-4">ID</th>
-                                    <th>Nombre de la División</th>
+                                    <th className="ps-4">Nombre de la División</th>
                                     <th className="text-center">Estado</th>
                                     <th className="text-center pe-4">Acciones</th>
                                 </tr>
@@ -131,8 +130,7 @@ export default function Divisiones() {
                                 {divisionesPaginadas.length > 0 ? (
                                     divisionesPaginadas.map((division) => (
                                         <tr key={division.id}>
-                                            <td className="ps-4 text-muted fw-bold">#{division.id}</td>
-                                            <td>
+                                            <td className="ps-4">
                                                 <div className="d-flex align-items-center gap-3">
                                                     <div className="p-2 rounded-3 bg-primary bg-opacity-10 text-primary">
                                                         <Building2 size={20} />

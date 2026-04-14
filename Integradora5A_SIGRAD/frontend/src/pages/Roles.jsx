@@ -144,8 +144,7 @@ export default function Roles() {
                             <table className="table table-hover align-middle">
                                 <thead>
                                 <tr className="text-muted small">
-                                    <th className="ps-4" style={{ width: '80px' }}>ID</th>
-                                    <th>NOMBRE DEL ROL</th>
+                                    <th className="ps-4">NOMBRE DEL ROL</th>
                                     <th className="text-center">ESTADO</th>
                                     <th className="text-center pe-4">ACCIONES</th>
                                 </tr>
@@ -154,8 +153,7 @@ export default function Roles() {
                                 {rolesPaginados.length > 0 ? (
                                     rolesPaginados.map((role) => (
                                         <tr key={role.id}>
-                                            <td className="ps-4 text-muted fw-bold">#{role.id}</td>
-                                            <td>
+                                            <td className="ps-4">
                                                 <div className="d-flex align-items-center gap-3">
                                                     <div className="p-2 rounded-3 bg-primary bg-opacity-10 text-primary">
                                                         <ShieldCheck size={20} />
@@ -207,7 +205,7 @@ export default function Roles() {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="5" className="text-center py-5 opacity-25">
+                                        <td colSpan="4" className="text-center py-5 opacity-25">
                                             <Search size={40} className="mb-2" />
                                             <p className="m-0">No se encontraron roles.</p>
                                         </td>

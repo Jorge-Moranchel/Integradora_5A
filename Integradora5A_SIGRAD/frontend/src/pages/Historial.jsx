@@ -226,8 +226,7 @@ export default function Historial() {
                             <table className="table table-hover align-middle">
                                 <thead className="table-light">
                                 <tr className="small text-muted text-uppercase fw-bold">
-                                    <th className="ps-4 py-3">ID</th>
-                                    <th>Usuario</th>
+                                    <th className="ps-4 py-3">Usuario</th>
                                     <th>Rol</th>
                                     <th>Área Deportiva</th>
                                     <th>Fecha</th>
@@ -239,8 +238,7 @@ export default function Historial() {
                                 <tbody>
                                 {reservas.map((reserva) => (
                                     <tr key={reserva.id} className="border-bottom border-light">
-                                        <td className="ps-4 fw-bold text-muted">#{reserva.id}</td>
-                                        <td className="fw-semibold text-dark">{reserva.usuario ? reserva.usuario.nombre : 'N/A'}</td>
+                                        <td className="ps-4 fw-semibold text-dark">{reserva.usuario ? reserva.usuario.nombre : 'N/A'}</td>
                                         <td>
                                             <span className="badge bg-info bg-opacity-10 text-info fw-bold">
                                                 {reserva.usuario && reserva.usuario.rol ? reserva.usuario.rol : 'N/A'}

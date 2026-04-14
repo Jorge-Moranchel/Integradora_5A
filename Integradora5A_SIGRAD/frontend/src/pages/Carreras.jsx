@@ -152,8 +152,7 @@ export default function Carreras() {
                             <table className="table table-hover align-middle">
                                 <thead>
                                 <tr className="small text-muted text-uppercase" style={{ letterSpacing: '1px' }}>
-                                    <th className="ps-4">ID</th>
-                                    <th>Nombre de la Carrera</th>
+                                    <th className="ps-4">Nombre de la Carrera</th>
                                     <th className="text-center">Estado</th>
                                     <th className="text-center pe-4">Acciones</th>
                                 </tr>
@@ -162,8 +161,7 @@ export default function Carreras() {
                                 {carrerasPaginadas.length > 0 ? (
                                     carrerasPaginadas.map((carrera) => (
                                         <tr key={carrera.id}>
-                                            <td className="ps-4 text-muted fw-bold">#{carrera.id}</td>
-                                            <td>
+                                            <td className="ps-4">
                                                 <div className="d-flex align-items-center gap-3">
                                                     <div className="p-2 rounded-3 bg-success bg-opacity-10 text-success">
                                                         <GraduationCap size={20} />
