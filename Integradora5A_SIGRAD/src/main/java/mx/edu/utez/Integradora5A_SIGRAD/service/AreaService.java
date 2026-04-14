@@ -65,10 +65,13 @@ public class AreaService {
     }
 
     // Lógica para Módulo 1.2: Consultar Áreas
+    // Lógica para Módulo 1.2: Consultar Áreas
     public List<Area> obtenerTodasLasAreas() {
-        // ✅ Magia aquí: Antes de enviar las áreas, limpia las que ya caducó su bloqueo
         liberarAreasBloqueadasVencidas();
-        return areaRepository.findAll();
+
+        // ✅ AHORA USAMOS LA CONSULTA OPTIMIZADA
+        // Esto evita que la BD descargue gigabytes de texto a la RAM del servidor
+        return areaRepository.findAllSinImagen();
     }
 
     // Lógica para Módulo 1.4: Bloquear Área

@@ -6,11 +6,11 @@ import mx.edu.utez.Integradora5A_SIGRAD.service.AreaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-// 👇 IMPORTACIONES NUEVAS PARA LAS IMÁGENES 👇
 import org.springframework.http.MediaType;
+import org.springframework.http.CacheControl; // ✅ IMPORTACIÓN PARA CACHÉ
 import java.util.Base64;
-
 import java.util.List;
+import java.util.concurrent.TimeUnit; // ✅ IMPORTACIÓN PARA TIEMPO
 
 @RestController
 @RequestMapping("/api/areas")
@@ -32,7 +32,7 @@ public class AreaController {
     public ResponseEntity<List<Area>> listarAreas() {
         List<Area> areas = areaService.obtenerTodasLasAreas();
 
-        // 👇 TRUCO DE OPTIMIZACIÓN EXTREMA 👇
+        // TRUCO DE OPTIMIZACIÓN EXTREMA
         // Vaciamos el Base64 para que el JSON de las áreas viaje súper ligero
         areas.forEach(area -> area.setImagen(null));
 
@@ -63,25 +63,34 @@ public class AreaController {
         return ResponseEntity.ok(areaActualizada);
     }
 
-    // 👇 NUEVO ENDPOINT: SERVIDOR DE IMÁGENES 👇
+    // ✅ ENDPOINT DE IMÁGENES CORREGIDO Y OPTIMIZADO
     @GetMapping(value = "/{id}/imagen", produces = MediaType.IMAGE_JPEG_VALUE)
     public ResponseEntity<byte[]> obtenerImagenArea(@PathVariable Long id) {
         try {
-            // Nota: Asegúrate de que este método exista en tu AreaService para buscar por ID.
-            // Si en tu servicio se llama diferente (ej. findById, obtenerPorId), cámbialo aquí:
             Area area = areaService.obtenerAreaPorId(id);
 
             if (area != null && area.getImagen() != null && !area.getImagen().isEmpty()) {
                 String base64Image = area.getImagen();
-                // Limpiamos la cabecera del Base64 si la tiene
+
+                // Quitamos la cabecera de HTML si la trae
                 if (base64Image.contains(",")) {
                     base64Image = base64Image.split(",")[1];
                 }
-                // Convertimos el texto a una imagen real
+
+                // 🔴 SOLUCIÓN 1: Limpiar cualquier espacio o salto de línea invisible
+                base64Image = base64Image.replaceAll("\\s+", "");
+
+                // Decodificamos de forma segura
                 byte[] imageBytes = Base64.getDecoder().decode(base64Image);
-                return ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(imageBytes);
+
+                // 🔴 SOLUCIÓN 2: Instruir a la App Móvil que guarde la imagen en memoria por 30 días
+                return ResponseEntity.ok()
+                        .contentType(MediaType.IMAGE_JPEG)
+                        .cacheControl(CacheControl.maxAge(30, TimeUnit.DAYS))
+                        .body(imageBytes);
             }
         } catch (Exception e) {
+            e.printStackTrace(); // Esto te mostrará en consola si llega a haber otro error
             return ResponseEntity.badRequest().build();
         }
         return ResponseEntity.notFound().build();
