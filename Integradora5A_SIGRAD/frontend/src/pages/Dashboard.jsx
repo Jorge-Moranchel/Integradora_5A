@@ -75,7 +75,7 @@ export default function Dashboard() {
                             <StatCard
                                 title="Completadas"
                                 value={stats.reservasCompletadas || 0}
-                                subText="Histórico exitoso"
+                                subText="Total de reservas finalizadas"
                                 icon={<CheckCircle className="text-success"/>}
                             />
                         </div>
