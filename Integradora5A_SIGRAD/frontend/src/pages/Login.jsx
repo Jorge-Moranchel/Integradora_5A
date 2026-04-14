@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock } from 'lucide-react';
-import Swal from 'sweetalert2'; // <-- Importamos SweetAlert
+import Swal from 'sweetalert2';
 import '../Style/Login.css';
 
 export default function Login() {
@@ -11,7 +11,6 @@ export default function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
     console.log("Intentando conectar con el backend...");
 
     try {
@@ -22,7 +21,8 @@ export default function Login() {
         },
         body: JSON.stringify({
           correo: email,
-          password: password
+          password: password,
+          esWeb: "true" // ✅ LE AVISAMOS AL BACKEND QUE SOMOS LA WEB
         }),
       });
 
@@ -31,9 +31,10 @@ export default function Login() {
       if (response.ok) {
         console.log("Login exitoso:", data);
 
+        // ✅ GUARDAMOS EL USUARIO Y EL PASE DE ENTRADA (TOKEN)
         localStorage.setItem('user', JSON.stringify(data));
+        localStorage.setItem('adminToken', 'autenticado');
 
-        // --- RECUADRO DE ÉXITO ---
         Swal.fire({
           icon: 'success',
           title: '¡Bienvenido!',
@@ -41,25 +42,22 @@ export default function Login() {
           showConfirmButton: false,
           timer: 2000,
           background: '#fff',
-          iconColor: '#00a854' // El verde de la UTEZ
+          iconColor: '#00a854'
         }).then(() => {
           navigate('/dashboard');
         });
 
       } else {
-        // --- RECUADRO DE ERROR (DATOS INCORRECTOS) ---
         Swal.fire({
           icon: 'error',
           title: '¡Ups!',
-          text: data.message || "Credenciales incorrectas",
+          text: data.message || data.mensaje || "Credenciales incorrectas",
           confirmButtonColor: '#d33',
           confirmButtonText: 'Intentar otra vez'
         });
       }
     } catch (error) {
       console.error("Error de conexión:", error);
-
-      // --- RECUADRO DE ERROR (CONEXIÓN FALLEDA) ---
       Swal.fire({
         icon: 'warning',
         title: 'Sin conexión',

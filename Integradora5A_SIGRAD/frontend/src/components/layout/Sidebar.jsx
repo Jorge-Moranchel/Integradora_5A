@@ -31,7 +31,9 @@ export default function Sidebar() {
             cancelButtonText: 'Cancelar'
         }).then((result) => {
             if (result.isConfirmed) {
+                // ✅ AHORA SÍ DESTRUIMOS TODO EL RASTRO DE LA SESIÓN
                 localStorage.removeItem('user');
+                localStorage.removeItem('adminToken'); // <-- ESTA LÍNEA ES LA QUE FALTABA
                 navigate('/login');
             }
         });
