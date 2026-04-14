@@ -1,7 +1,6 @@
 package mx.edu.utez.Integradora5A_SIGRAD.service;
 
 import mx.edu.utez.Integradora5A_SIGRAD.dto.DashboardDTO;
-import mx.edu.utez.Integradora5A_SIGRAD.model.Reserva;
 import mx.edu.utez.Integradora5A_SIGRAD.repository.AreaRepository;
 import mx.edu.utez.Integradora5A_SIGRAD.repository.ReservaRepository;
 import mx.edu.utez.Integradora5A_SIGRAD.repository.UsuarioRepository;
@@ -10,11 +9,10 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.ArrayList;
-import java.util.stream.Collectors;
 
 @Service
 public class DashboardService {
@@ -28,83 +26,57 @@ public class DashboardService {
 
     public DashboardDTO obtenerEstadisticas() {
         DashboardDTO dto = new DashboardDTO();
-
-        // 1. Obtener la fecha de hoy
         String fechaHoy = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 
-        // 2. Traer TODAS las reservas de la base de datos
-        List<Reserva> todasLasReservas = reservaRepository.findAll();
-
-        // 👇 SEPARAMOS POR ESTADOS 👇
-        List<Reserva> reservasConfirmadas = todasLasReservas.stream()
-                .filter(r -> "CONFIRMADA".equalsIgnoreCase(r.getEstado()))
-                .collect(Collectors.toList());
-
-        List<Reserva> reservasCompletadas = todasLasReservas.stream()
-                .filter(r -> "COMPLETADA".equalsIgnoreCase(r.getEstado()))
-                .collect(Collectors.toList());
-
-        List<Reserva> reservasCanceladas = todasLasReservas.stream()
-                .filter(r -> "CANCELADA".equalsIgnoreCase(r.getEstado()))
-                .collect(Collectors.toList());
-
-        // 👇 CREAMOS UNA LISTA DE RESERVAS "VALIDAS" PARA LAS GRÁFICAS (Confirmadas + Completadas) 👇
-        List<Reserva> reservasValidasParaGraficas = new ArrayList<>(reservasConfirmadas);
-        reservasValidasParaGraficas.addAll(reservasCompletadas);
-
-        // Filtrar las reservas de HOY (usamos las válidas para saber qué tanto se usa hoy)
-        List<Reserva> reservasHoyList = reservasValidasParaGraficas.stream()
-                .filter(r -> fechaHoy.equals(r.getFecha()))
-                .collect(Collectors.toList());
-
-        // Asignar los conteos a las tarjetas
-        dto.setReservasActivas(reservasConfirmadas.size()); // Solo las que están pendientes por ocurrir
-        dto.setReservasHoy(reservasHoyList.size());
+        // 1. Tarjetas Superiores (Consultas de conteo directas y rápidas)
+        dto.setReservasActivas((int) reservaRepository.countByEstadoIgnoreCase("CONFIRMADA"));
+        dto.setReservasCompletadas((int) reservaRepository.countByEstadoIgnoreCase("COMPLETADA"));
+        dto.setReservasCanceladas((int) reservaRepository.countByEstadoIgnoreCase("CANCELADA"));
         dto.setUsuariosRegistrados(usuarioRepository.count());
-        dto.setReservasCompletadas(reservasCompletadas.size()); // Nuevos datos
-        dto.setReservasCanceladas(reservasCanceladas.size());   // Nuevos datos
 
-        // =========================================================
-        // 3. CÁLCULO DINÁMICO DE TASA DE OCUPACIÓN
-        // =========================================================
+        long totalReservasHoy = reservaRepository.countReservasValidasPorFecha(fechaHoy);
+        dto.setReservasHoy((int) totalReservasHoy);
+
+        // 2. Tasa de Ocupación Dinámica
         long totalAreas = areaRepository.count();
         int tasaOcupacion = 0;
 
-        if (totalAreas > 0) {
-            Map<Long, Long> reservasPorAreaHoy = reservasHoyList.stream()
-                    .filter(r -> r.getArea() != null)
-                    .collect(Collectors.groupingBy(r -> r.getArea().getId(), Collectors.counting()));
+        if (totalAreas > 0 && totalReservasHoy > 0) {
+            List<Object[]> reservasPorAreaHoy = reservaRepository.countReservasValidasPorAreaYFecha(fechaHoy);
 
-            long maxReservasEnUnArea = reservasPorAreaHoy.values().stream()
-                    .max(Long::compare)
-                    .orElse(0L);
+            long maxReservasEnUnArea = 0;
+            for (Object[] result : reservasPorAreaHoy) {
+                long count = ((Number) result[1]).longValue();
+                if (count > maxReservasEnUnArea) {
+                    maxReservasEnUnArea = count;
+                }
+            }
 
             long baseCapacidad = Math.max(5L, maxReservasEnUnArea);
             long capacidadTotalDiaria = totalAreas * baseCapacidad;
 
-            tasaOcupacion = (int) ((reservasHoyList.size() * 100.0f) / capacidadTotalDiaria);
+            tasaOcupacion = (int) ((totalReservasHoy * 100.0f) / capacidadTotalDiaria);
         }
-
         dto.setTasaOcupacion(Math.min(tasaOcupacion, 100));
 
-        // =========================================================
-        // 4. DATOS PARA LAS GRÁFICAS (USANDO RESERVAS VÁLIDAS)
-        // =========================================================
-
-        // Gráfica de Dona: Reservas totales agrupadas por Nombre del Área
-        Map<String, Long> porArea = reservasValidasParaGraficas.stream()
-                .filter(r -> r.getArea() != null && r.getArea().getNombre() != null)
-                .collect(Collectors.groupingBy(r -> r.getArea().getNombre(), Collectors.counting()));
+        // 3. Gráfica de Dona (Por Área)
+        List<Object[]> reservasPorNombreArea = reservaRepository.countReservasValidasPorNombreArea();
+        Map<String, Long> porArea = new HashMap<>();
+        for (Object[] result : reservasPorNombreArea) {
+            String nombreArea = (String) result[0];
+            Long count = ((Number) result[1]).longValue();
+            porArea.put(nombreArea, count);
+        }
         dto.setReservasPorArea(porArea);
 
-        // Gráfica de Barras: Reservas Mensuales
-        Map<String, Long> porMes = reservasValidasParaGraficas.stream()
-                .filter(r -> r.getFecha() != null && r.getFecha().length() >= 7)
-                .collect(Collectors.groupingBy(
-                        r -> r.getFecha().substring(0, 7),
-                        TreeMap::new,
-                        Collectors.counting()
-                ));
+        // 4. Gráfica de Barras (Por Mes)
+        List<Object[]> reservasPorMes = reservaRepository.countReservasValidasPorMes();
+        Map<String, Long> porMes = new TreeMap<>(); // TreeMap para que se ordene por fecha automáticamente
+        for (Object[] result : reservasPorMes) {
+            String mes = (String) result[0];
+            Long count = ((Number) result[1]).longValue();
+            porMes.put(mes, count);
+        }
         dto.setReservasPorMes(porMes);
 
         return dto;

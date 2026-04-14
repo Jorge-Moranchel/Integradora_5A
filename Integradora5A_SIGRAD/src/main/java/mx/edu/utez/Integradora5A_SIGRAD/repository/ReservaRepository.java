@@ -14,6 +14,10 @@ import java.util.List;
 @Repository
 public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 
+    // ==============================================================
+    // 1. MÉTODOS ORIGINALES (Para CRUD, Paginación y Validaciones)
+    // ==============================================================
+
     @Query("SELECT r FROM Reserva r JOIN FETCH r.usuario JOIN FETCH r.area ORDER BY r.id DESC")
     List<Reserva> findAll();
 
@@ -21,9 +25,10 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
     List<Reserva> findByUsuarioId(Long idUsuario);
 
     List<Reserva> findByAreaIdAndFechaAndEstadoNot(Long idArea, String fecha, String estado);
+
     List<Reserva> findByAreaIdAndFechaAndEstadoNotAndIdNot(Long idArea, String fecha, String estado, Long idReserva);
 
-    // Para buscar rápidamente las confirmadas y verificar si ya vencieron 👇
+    // Para buscar rápidamente las confirmadas y verificar si ya vencieron
     List<Reserva> findByEstado(String estado);
 
     @Query("""
@@ -45,6 +50,7 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
     );
 
     long countByEstado(String estado);
+
     long countByFechaAndEstado(String fecha, String estado);
 
     @EntityGraph(attributePaths = {"usuario", "area"})
@@ -53,4 +59,23 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
             "LOWER(u.rol) LIKE LOWER(CONCAT('%', :termino, '%')) OR " +
             "LOWER(a.nombre) LIKE LOWER(CONCAT('%', :termino, '%'))")
     Page<Reserva> buscarConPaginacion(@Param("termino") String termino, Pageable pageable);
+
+
+    // ==============================================================
+    // 2. NUEVOS MÉTODOS OPTIMIZADOS (Para que el Dashboard vuele)
+    // ==============================================================
+
+    long countByEstadoIgnoreCase(String estado);
+
+    @Query("SELECT COUNT(r) FROM Reserva r WHERE r.fecha = :fecha AND r.estado IN ('CONFIRMADA', 'COMPLETADA')")
+    long countReservasValidasPorFecha(@Param("fecha") String fecha);
+
+    @Query("SELECT r.area.id, COUNT(r) FROM Reserva r WHERE r.fecha = :fecha AND r.estado IN ('CONFIRMADA', 'COMPLETADA') GROUP BY r.area.id")
+    List<Object[]> countReservasValidasPorAreaYFecha(@Param("fecha") String fecha);
+
+    @Query("SELECT a.nombre, COUNT(r) FROM Reserva r JOIN r.area a WHERE r.estado IN ('CONFIRMADA', 'COMPLETADA') GROUP BY a.nombre")
+    List<Object[]> countReservasValidasPorNombreArea();
+
+    @Query("SELECT SUBSTRING(r.fecha, 1, 7), COUNT(r) FROM Reserva r WHERE r.estado IN ('CONFIRMADA', 'COMPLETADA') GROUP BY SUBSTRING(r.fecha, 1, 7)")
+    List<Object[]> countReservasValidasPorMes();
 }

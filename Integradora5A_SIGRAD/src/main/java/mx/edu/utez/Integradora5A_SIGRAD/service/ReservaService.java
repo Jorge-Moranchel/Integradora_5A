@@ -33,7 +33,7 @@ public class ReservaService {
     @Autowired private AreaRepository areaRepository;
     @Autowired private UsuarioRepository usuarioRepository;
 
-    // 👇 MÉTODO AUXILIAR PARA REVISAR SI YA PASÓ LA HORA 👇
+    // MÉTODO AUXILIAR PARA REVISAR SI YA PASÓ LA HORA (Usado para cambiar a COMPLETADA)
     private boolean isReservaPasada(String fechaStr, String horaFinStr) {
         try {
             LocalDate fecha = LocalDate.parse(fechaStr);
@@ -45,7 +45,22 @@ public class ReservaService {
         }
     }
 
-    //  Convierte las CONFIRMADAS a COMPLETADAS si ya pasó el tiempo 👇
+    // ✅ NUEVO: MÉTODO PARA EVITAR CREAR/EDITAR EN EL PASADO
+    private void validarFechaYHoraFutura(String fechaStr, String horaInicioStr) throws Exception {
+        try {
+            LocalDate fechaReserva = LocalDate.parse(fechaStr);
+            LocalTime horaInicio = LocalTime.parse(horaInicioStr);
+            LocalDateTime fechaHoraReserva = LocalDateTime.of(fechaReserva, horaInicio);
+
+            // Si la fecha y hora seleccionada es ANTES de la fecha y hora actual
+            if (fechaHoraReserva.isBefore(LocalDateTime.now())) {
+                throw new Exception("No puedes agendar ni editar una reserva con una fecha u hora que ya pasó.");
+            }
+        } catch (DateTimeParseException e) {
+            throw new Exception("Formato de fecha u hora incorrecto.");
+        }
+    }
+
     public void actualizarEstadosVencidos() {
         List<Reserva> confirmadas = reservaRepository.findByEstado("CONFIRMADA");
         boolean hayCambios = false;
@@ -60,10 +75,6 @@ public class ReservaService {
         }
     }
 
-    /**
-     * Exportación PDF: filtra en memoria parseando {@link Reserva#getFecha()} a {@link LocalDate},
-     * para que el rango sea correcto aunque en BD venga ISO, timestamp en texto o dd/MM/yyyy.
-     */
     public List<Reserva> listarReservasParaExportPdf(LocalDate inicio, LocalDate fin) {
         actualizarEstadosVencidos();
         return reservaRepository.findAll().stream()
@@ -77,37 +88,28 @@ public class ReservaService {
     }
 
     private Optional<LocalDate> parseFechaReserva(String raw) {
-        if (raw == null) {
-            return Optional.empty();
-        }
+        if (raw == null) return Optional.empty();
         String s = raw.trim();
-        if (s.isEmpty()) {
-            return Optional.empty();
-        }
+        if (s.isEmpty()) return Optional.empty();
         Matcher iso = ISO_DATE_IN_TEXT.matcher(s);
         if (iso.find()) {
-            try {
-                return Optional.of(LocalDate.parse(iso.group(1)));
-            } catch (DateTimeParseException ignored) {
-                // seguir
-            }
+            try { return Optional.of(LocalDate.parse(iso.group(1))); }
+            catch (DateTimeParseException ignored) {}
         }
-        try {
-            return Optional.of(LocalDate.parse(s));
-        } catch (DateTimeParseException e) {
-            try {
-                return Optional.of(LocalDate.parse(s, DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-            } catch (DateTimeParseException e2) {
-                try {
-                    return Optional.of(LocalDate.parse(s, DateTimeFormatter.ofPattern("d/M/yyyy")));
-                } catch (DateTimeParseException e3) {
-                    return Optional.empty();
-                }
+        try { return Optional.of(LocalDate.parse(s)); }
+        catch (DateTimeParseException e) {
+            try { return Optional.of(LocalDate.parse(s, DateTimeFormatter.ofPattern("dd/MM/yyyy"))); }
+            catch (DateTimeParseException e2) {
+                try { return Optional.of(LocalDate.parse(s, DateTimeFormatter.ofPattern("d/M/yyyy"))); }
+                catch (DateTimeParseException e3) { return Optional.empty(); }
             }
         }
     }
 
     public Reserva crearReserva(ReservaDTO dto) throws Exception {
+        // ✅ LLAMAMOS A LA VALIDACIÓN DEL PASADO
+        validarFechaYHoraFutura(dto.getFecha(), dto.getHoraInicio());
+
         Usuario usuario = usuarioRepository.findById(dto.getIdUsuario())
                 .orElseThrow(() -> new Exception("Error: El usuario no existe."));
         Area area = areaRepository.findById(dto.getIdArea())
@@ -154,13 +156,11 @@ public class ReservaService {
         Reserva reserva = reservaRepository.findById(id)
                 .orElseThrow(() -> new Exception("Error: La reserva no existe."));
 
-        // Validar si justo acaba de vencer
         if (reserva.getEstado().equals("CONFIRMADA") && isReservaPasada(reserva.getFecha(), reserva.getHoraFin())) {
             reserva.setEstado("COMPLETADA");
             reservaRepository.save(reserva);
         }
 
-        // 👇 BLOQUEOS ACTUALIZADOS 👇
         if (reserva.getEstado().equalsIgnoreCase("COMPLETADA")) {
             throw new Exception("No puedes cancelar una reserva que ya finalizó su horario.");
         }
@@ -173,16 +173,17 @@ public class ReservaService {
     }
 
     public Reserva actualizarReserva(Long id, ReservaDTO dto) throws Exception {
+        // ✅ LLAMAMOS A LA VALIDACIÓN DEL PASADO
+        validarFechaYHoraFutura(dto.getFecha(), dto.getHoraInicio());
+
         Reserva existente = reservaRepository.findById(id)
                 .orElseThrow(() -> new Exception("Error: La reserva que intentas editar no existe."));
 
-        // Validar si justo acaba de vencer
         if (existente.getEstado().equals("CONFIRMADA") && isReservaPasada(existente.getFecha(), existente.getHoraFin())) {
             existente.setEstado("COMPLETADA");
             reservaRepository.save(existente);
         }
 
-        // 👇 BLOQUEOS ACTUALIZADOS 👇
         if (existente.getEstado().equalsIgnoreCase("COMPLETADA")) {
             throw new Exception("No puedes editar una reserva que ya finalizó.");
         }

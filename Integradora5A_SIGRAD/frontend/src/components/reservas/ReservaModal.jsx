@@ -19,6 +19,15 @@ export default function ReservaModal({ show, onClose, onSuccess, reservaAEditar 
     // Si la reserva no es CONFIRMADA, el modal es solo lectura
     const soloLectura = reservaAEditar && reservaAEditar.estado !== 'CONFIRMADA';
 
+    // Obtener la fecha de hoy en formato YYYY-MM-DD para bloquear el calendario
+    const getHoyStr = () => {
+        const ahora = new Date();
+        return ahora.getFullYear() + '-' +
+            String(ahora.getMonth() + 1).padStart(2, '0') + '-' +
+            String(ahora.getDate()).padStart(2, '0');
+    };
+    const hoyStr = getHoyStr();
+
     useEffect(() => {
         if (!show) return;
         cargarCatalogos();
@@ -115,11 +124,33 @@ export default function ReservaModal({ show, onClose, onSuccess, reservaAEditar 
             Swal.fire('Atención', 'Selecciona un usuario', 'warning');
             return;
         }
+
+        // ✅ VALIDACIÓN 1: Orden de las horas
+        if (horaInicio >= horaFin) {
+            Swal.fire('Atención', 'La hora de salida debe ser posterior a la hora de entrada.', 'warning');
+            return;
+        }
+
+        // ✅ VALIDACIÓN 2: Evitar horas en el pasado para el día de hoy
+        if (fecha === hoyStr) {
+            const ahora = new Date();
+            const minutosActuales = ahora.getHours() * 60 + ahora.getMinutes();
+
+            const [h, m] = horaInicio.split(':').map(Number);
+            const minutosInicio = h * 60 + m;
+
+            if (minutosInicio < minutosActuales) {
+                Swal.fire('Atención', 'No puedes seleccionar una hora que ya pasó.', 'warning');
+                return;
+            }
+        }
+
         const esEdicion = !!reservaAEditar;
         const url = esEdicion
             ? `http://localhost:8080/api/reservas/actualizar/${reservaAEditar.id}`
             : 'http://localhost:8080/api/reservas/crear';
         const method = esEdicion ? 'PUT' : 'POST';
+
         try {
             const response = await fetch(url, {
                 method,
@@ -154,19 +185,9 @@ export default function ReservaModal({ show, onClose, onSuccess, reservaAEditar 
 
     if (!show) return null;
 
-    const estadoVista = reservaAEditar?.estado || 'CONFIRMADA';
-    const estadoLabel =
-        estadoVista === 'CONFIRMADA' ? 'Activo' :
-            estadoVista === 'CANCELADA'  ? 'Cancelado' : 'Finalizado';
-    const estadoBadgeClass =
-        estadoVista === 'CONFIRMADA' ? 'bg-success bg-opacity-10 text-success' :
-            estadoVista === 'CANCELADA'  ? 'bg-danger bg-opacity-10 text-danger'   :
-                'bg-secondary bg-opacity-10 text-secondary';
-
-    // Título del modal según el caso
     const tituloModal =
         !reservaAEditar       ? 'Nueva Reserva'  :
-            soloLectura           ? 'Detalle de Reserva' :
+            soloLectura       ? 'Detalle de Reserva' :
                 'Editar Reserva';
 
     return (
@@ -194,7 +215,7 @@ export default function ReservaModal({ show, onClose, onSuccess, reservaAEditar 
                                             onChange={(e) => setIdArea(e.target.value)}
                                             required
                                         >
-                                            <option value="">Seleccionar área...</option>
+                                            <option value="">Seleccionar Área...</option>
                                             {listaAreas.map((a) => (
                                                 <option key={a.id} value={a.id}>{a.nombre}</option>
                                             ))}
@@ -223,67 +244,32 @@ export default function ReservaModal({ show, onClose, onSuccess, reservaAEditar 
                                                         return next;
                                                     });
                                                 }}
-                                                aria-expanded={usuarioMenuAbierto}
-                                                aria-haspopup="listbox"
-                                                aria-labelledby="label-usuario-reserva"
                                             >
-                                                {usuarioSeleccionado
-                                                    ? `${usuarioSeleccionado.nombre}${usuarioSeleccionado.matricula ? ` — ${usuarioSeleccionado.matricula}` : ''}`
-                                                    : 'Seleccionar usuario...'}
+                                                {usuarioSeleccionado ? `${usuarioSeleccionado.nombre} (${usuarioSeleccionado.matricula || 'Sin matricula'})` : 'Seleccionar usuario...'}
                                             </button>
                                             {usuarioMenuAbierto && (
-                                                <div
-                                                    className="position-absolute start-0 end-0 mt-1 rounded-3 border bg-white shadow overflow-hidden"
-                                                    style={{
-                                                        zIndex: 2000,
-                                                        maxHeight: 'min(280px, 50vh)',
-                                                        display: 'flex',
-                                                        flexDirection: 'column',
-                                                        minWidth: 0
-                                                    }}
-                                                    role="listbox"
-                                                >
-                                                    <div className="p-2 border-bottom bg-light rounded-top-3">
-                                                        <input
-                                                            ref={busquedaUsuarioInputRef}
-                                                            type="search"
-                                                            className="form-control form-control-sm border-0 bg-white"
-                                                            placeholder="Buscar por nombre, matrícula, correo o rol..."
-                                                            value={busquedaUsuario}
-                                                            onChange={(e) => setBusquedaUsuario(e.target.value)}
-                                                            autoComplete="off"
-                                                            aria-label="Buscar usuario"
-                                                            onMouseDown={(e) => e.stopPropagation()}
-                                                        />
-                                                    </div>
-                                                    <div
-                                                        className="overflow-y-auto overflow-x-hidden py-1 rounded-bottom-3"
-                                                        style={{ minWidth: 0, maxWidth: '100%' }}
-                                                    >
-                                                        {usuariosFiltrados.length === 0 ? (
-                                                            <div className="px-3 py-2 small text-muted text-wrap">Sin coincidencias</div>
-                                                        ) : (
-                                                            usuariosFiltrados.map((u) => (
-                                                                <button
-                                                                    key={u.id}
-                                                                    type="button"
-                                                                    role="option"
-                                                                    aria-selected={String(u.id) === String(idUsuario)}
-                                                                    className="dropdown-item py-2 px-3 small text-start text-wrap text-break w-100"
-                                                                    style={{ whiteSpace: 'normal', wordBreak: 'break-word' }}
-                                                                    onMouseDown={(e) => e.preventDefault()}
-                                                                    onClick={() => {
-                                                                        setIdUsuario(String(u.id));
-                                                                        setUsuarioMenuAbierto(false);
-                                                                        setBusquedaUsuario('');
-                                                                    }}
-                                                                >
-                                                                    {u.nombre}
-                                                                    {u.matricula ? ` — ${u.matricula}` : ''}
-                                                                </button>
-                                                            ))
-                                                        )}
-                                                    </div>
+                                                <div className="position-absolute w-100 bg-white border rounded shadow-sm mt-1 z-3" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                                                    <input
+                                                        ref={busquedaUsuarioInputRef}
+                                                        type="text"
+                                                        className="form-control border-0 border-bottom sticky-top top-0"
+                                                        placeholder="Buscar usuario..."
+                                                        value={busquedaUsuario}
+                                                        onChange={(e) => setBusquedaUsuario(e.target.value)}
+                                                    />
+                                                    {usuariosFiltrados.map(u => (
+                                                        <div
+                                                            key={u.id}
+                                                            className="p-2 border-bottom"
+                                                            style={{ cursor: 'pointer' }}
+                                                            onClick={() => {
+                                                                setIdUsuario(String(u.id));
+                                                                setUsuarioMenuAbierto(false);
+                                                            }}
+                                                        >
+                                                            {u.nombre} <span className="text-muted small">({u.matricula || 'N/A'})</span>
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             )}
                                         </div>
@@ -291,95 +277,61 @@ export default function ReservaModal({ show, onClose, onSuccess, reservaAEditar 
                                 </div>
                             </div>
 
+                            {/* Fila de Fechas y Horas */}
                             <div className="row mb-3">
                                 <div className="col-md-4">
                                     <label className="form-label fw-bold small">Fecha *</label>
-                                    {soloLectura ? (
-                                        <p className="form-control-plaintext fw-semibold ps-1">{fecha || 'N/A'}</p>
-                                    ) : (
-                                        <input
-                                            type="date"
-                                            className="form-control bg-light border-0"
-                                            value={fecha}
-                                            onChange={(e) => setFecha(e.target.value)}
-                                            required
-                                        />
-                                    )}
+                                    <input
+                                        type="date"
+                                        className="form-control bg-light border-0"
+                                        value={fecha}
+                                        min={hoyStr} /* ✅ Bloquea el calendario visualmente en HTML */
+                                        onChange={(e) => setFecha(e.target.value)}
+                                        required
+                                        disabled={soloLectura}
+                                    />
                                 </div>
                                 <div className="col-md-4">
-                                    <label className="form-label fw-bold small">Hora inicio *</label>
-                                    {soloLectura ? (
-                                        <p className="form-control-plaintext fw-semibold ps-1">{horaInicio || 'N/A'}</p>
-                                    ) : (
-                                        <input
-                                            type="time"
-                                            className="form-control bg-light border-0"
-                                            value={horaInicio}
-                                            onChange={(e) => setHoraInicio(e.target.value)}
-                                            required
-                                        />
-                                    )}
+                                    <label className="form-label fw-bold small">Hora Inicio *</label>
+                                    <input
+                                        type="time"
+                                        className="form-control bg-light border-0"
+                                        value={horaInicio}
+                                        onChange={(e) => setHoraInicio(e.target.value)}
+                                        required
+                                        disabled={soloLectura}
+                                    />
                                 </div>
                                 <div className="col-md-4">
-                                    <label className="form-label fw-bold small">Hora fin *</label>
-                                    {soloLectura ? (
-                                        <p className="form-control-plaintext fw-semibold ps-1">{horaFin || 'N/A'}</p>
-                                    ) : (
-                                        <input
-                                            type="time"
-                                            className="form-control bg-light border-0"
-                                            value={horaFin}
-                                            onChange={(e) => setHoraFin(e.target.value)}
-                                            required
-                                        />
-                                    )}
+                                    <label className="form-label fw-bold small">Hora Fin *</label>
+                                    <input
+                                        type="time"
+                                        className="form-control bg-light border-0"
+                                        value={horaFin}
+                                        onChange={(e) => setHoraFin(e.target.value)}
+                                        required
+                                        disabled={soloLectura}
+                                    />
                                 </div>
                             </div>
 
                             <div className="mb-3">
-                                <label className="form-label fw-bold small">Descripción</label>
-                                {soloLectura ? (
-                                    <p className="form-control-plaintext fw-semibold ps-1">
-                                        {descripcion || <span className="text-muted fst-italic">Sin descripción</span>}
-                                    </p>
-                                ) : (
-                                    <textarea
-                                        className="form-control bg-light border-0"
-                                        rows="3"
-                                        value={descripcion}
-                                        onChange={(e) => setDescripcion(e.target.value)}
-                                        placeholder="Detalle opcional de la reserva"
-                                    />
-                                )}
-                            </div>
-
-                            <div className="mb-2">
-                                <label className="form-label fw-bold small">Estado</label>
-                                <div className="d-flex flex-column gap-1">
-                                    <span
-                                        className={`badge ${estadoBadgeClass} fw-bold align-self-start`}
-                                        style={{ fontSize: '11px', letterSpacing: '0.5px', minWidth: '90px', textAlign: 'center' }}
-                                    >
-                                        {estadoLabel}
-                                    </span>
-                                    {!reservaAEditar && (
-                                        <p className="text-muted small mb-0">
-                                            Al crear la reserva queda <strong>confirmada</strong>. No se puede dar de alta como
-                                            completada o cancelada: lo completa el sistema cuando pasa la fecha/hora, y cancelar
-                                            solo se hace desde el historial.
-                                        </p>
-                                    )}
-                                </div>
+                                <label className="form-label fw-bold small">Motivo / Descripción (Opcional)</label>
+                                <textarea
+                                    className="form-control bg-light border-0"
+                                    rows="3"
+                                    value={descripcion}
+                                    onChange={(e) => setDescripcion(e.target.value)}
+                                    disabled={soloLectura}
+                                />
                             </div>
                         </div>
 
                         <div className="modal-footer border-0 p-4 pt-0">
-                            <button type="button" className="btn btn-outline-secondary flex-grow-1" onClick={onClose}>
-                                {soloLectura ? 'Cerrar' : 'Cancelar'}
-                            </button>
+                            <button type="button" className="btn btn-light fw-bold px-4" onClick={onClose}>Cancelar</button>
                             {!soloLectura && (
-                                <button type="submit" className="btn btn-success flex-grow-1">
-                                    {reservaAEditar ? 'Guardar Cambios' : 'Crear Reserva'}
+                                <button type="submit" className="btn btn-primary fw-bold px-4">
+                                    {reservaAEditar ? 'Actualizar Reserva' : 'Guardar Reserva'}
                                 </button>
                             )}
                         </div>
