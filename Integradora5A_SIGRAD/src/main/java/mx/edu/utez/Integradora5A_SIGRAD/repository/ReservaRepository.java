@@ -2,6 +2,7 @@ package mx.edu.utez.Integradora5A_SIGRAD.repository;
 
 import mx.edu.utez.Integradora5A_SIGRAD.model.Reserva;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.domain.Page;
@@ -14,21 +15,16 @@ import java.util.List;
 @Repository
 public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 
-    // ==============================================================
-    // 1. MÉTODOS ORIGINALES (Para CRUD, Paginación y Validaciones)
-    // ==============================================================
-
     @Query("SELECT r FROM Reserva r JOIN FETCH r.usuario JOIN FETCH r.area ORDER BY r.id DESC")
     List<Reserva> findAll();
 
-    @Query("SELECT r FROM Reserva r JOIN FETCH r.usuario JOIN FETCH r.area WHERE r.usuario.id = :idUsuario")
+    @Query("SELECT r FROM Reserva r JOIN FETCH r.usuario JOIN FETCH r.area WHERE r.usuario.id = :idUsuario ORDER BY r.fecha DESC, r.horaInicio DESC")
     List<Reserva> findByUsuarioId(Long idUsuario);
 
     List<Reserva> findByAreaIdAndFechaAndEstadoNot(Long idArea, String fecha, String estado);
 
     List<Reserva> findByAreaIdAndFechaAndEstadoNotAndIdNot(Long idArea, String fecha, String estado, Long idReserva);
 
-    // Para buscar rápidamente las confirmadas y verificar si ya vencieron
     List<Reserva> findByEstado(String estado);
 
     @Query("""
@@ -53,18 +49,21 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 
     long countByFechaAndEstado(String fecha, String estado);
 
+    // ✅ OPTIMIZACIÓN 1: Paginación ordenada. Agregamos el ORDER BY r.id DESC para que la web no se trabe
     @EntityGraph(attributePaths = {"usuario", "area"})
     @Query("SELECT r FROM Reserva r LEFT JOIN r.usuario u LEFT JOIN r.area a WHERE " +
-            "LOWER(u.nombre) LIKE LOWER(CONCAT('%', :termino, '%')) OR " +
+            "(LOWER(u.nombre) LIKE LOWER(CONCAT('%', :termino, '%')) OR " +
             "LOWER(u.rol) LIKE LOWER(CONCAT('%', :termino, '%')) OR " +
-            "LOWER(a.nombre) LIKE LOWER(CONCAT('%', :termino, '%'))")
+            "LOWER(a.nombre) LIKE LOWER(CONCAT('%', :termino, '%'))) " +
+            "ORDER BY r.id DESC")
     Page<Reserva> buscarConPaginacion(@Param("termino") String termino, Pageable pageable);
 
+    // ✅ OPTIMIZACIÓN 2: Actualización masiva (Bulk Update) directamente en la BD
+    @Modifying
+    @Query("UPDATE Reserva r SET r.estado = 'COMPLETADA' WHERE r.estado = 'CONFIRMADA' AND (r.fecha < :fechaHoy OR (r.fecha = :fechaHoy AND r.horaFin < :horaActual))")
+    int marcarVencidasComoCompletadas(@Param("fechaHoy") String fechaHoy, @Param("horaActual") String horaActual);
 
-    // ==============================================================
-    // 2. NUEVOS MÉTODOS OPTIMIZADOS (Para que el Dashboard vuele)
-    // ==============================================================
-
+    // Métodos del Dashboard...
     long countByEstadoIgnoreCase(String estado);
 
     @Query("SELECT COUNT(r) FROM Reserva r WHERE r.fecha = :fecha AND r.estado IN ('CONFIRMADA', 'COMPLETADA')")

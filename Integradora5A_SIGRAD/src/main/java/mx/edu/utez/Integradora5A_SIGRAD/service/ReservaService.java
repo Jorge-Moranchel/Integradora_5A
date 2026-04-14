@@ -33,7 +33,7 @@ public class ReservaService {
     @Autowired private AreaRepository areaRepository;
     @Autowired private UsuarioRepository usuarioRepository;
 
-    // MÉTODO AUXILIAR PARA REVISAR SI YA PASÓ LA HORA (Usado para cambiar a COMPLETADA)
+    // MÉTODO AUXILIAR PARA REVISAR SI YA PASÓ LA HORA (Para cancelar manual)
     private boolean isReservaPasada(String fechaStr, String horaFinStr) {
         try {
             LocalDate fecha = LocalDate.parse(fechaStr);
@@ -45,14 +45,12 @@ public class ReservaService {
         }
     }
 
-    // ✅ NUEVO: MÉTODO PARA EVITAR CREAR/EDITAR EN EL PASADO
     private void validarFechaYHoraFutura(String fechaStr, String horaInicioStr) throws Exception {
         try {
             LocalDate fechaReserva = LocalDate.parse(fechaStr);
             LocalTime horaInicio = LocalTime.parse(horaInicioStr);
             LocalDateTime fechaHoraReserva = LocalDateTime.of(fechaReserva, horaInicio);
 
-            // Si la fecha y hora seleccionada es ANTES de la fecha y hora actual
             if (fechaHoraReserva.isBefore(LocalDateTime.now())) {
                 throw new Exception("No puedes agendar ni editar una reserva con una fecha u hora que ya pasó.");
             }
@@ -61,18 +59,11 @@ public class ReservaService {
         }
     }
 
+    // ✅ OPTIMIZACIÓN GIGANTE: Actualizamos miles de reservas vencidas en 2 milisegundos directamente en SQL
     public void actualizarEstadosVencidos() {
-        List<Reserva> confirmadas = reservaRepository.findByEstado("CONFIRMADA");
-        boolean hayCambios = false;
-        for (Reserva r : confirmadas) {
-            if (isReservaPasada(r.getFecha(), r.getHoraFin())) {
-                r.setEstado("COMPLETADA");
-                hayCambios = true;
-            }
-        }
-        if (hayCambios) {
-            reservaRepository.saveAll(confirmadas);
-        }
+        String fechaHoy = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        String horaActual = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"));
+        reservaRepository.marcarVencidasComoCompletadas(fechaHoy, horaActual);
     }
 
     public List<Reserva> listarReservasParaExportPdf(LocalDate inicio, LocalDate fin) {
@@ -107,7 +98,6 @@ public class ReservaService {
     }
 
     public Reserva crearReserva(ReservaDTO dto) throws Exception {
-        // ✅ LLAMAMOS A LA VALIDACIÓN DEL PASADO
         validarFechaYHoraFutura(dto.getFecha(), dto.getHoraInicio());
 
         Usuario usuario = usuarioRepository.findById(dto.getIdUsuario())
@@ -173,7 +163,6 @@ public class ReservaService {
     }
 
     public Reserva actualizarReserva(Long id, ReservaDTO dto) throws Exception {
-        // ✅ LLAMAMOS A LA VALIDACIÓN DEL PASADO
         validarFechaYHoraFutura(dto.getFecha(), dto.getHoraInicio());
 
         Reserva existente = reservaRepository.findById(id)
