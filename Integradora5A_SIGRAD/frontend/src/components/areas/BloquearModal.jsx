@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
-import Swal from 'sweetalert2'; // Importación añadida
+import Swal from 'sweetalert2';
 
 export default function BloquearModal({ show, onClose, fetchAreas, areaId }) {
     const [formData, setFormData] = useState({
@@ -10,6 +10,15 @@ export default function BloquearModal({ show, onClose, fetchAreas, areaId }) {
     });
 
     if (!show) return null;
+
+    // ✅ Obtener la fecha de hoy para bloquear el calendario HTML
+    const getHoyStr = () => {
+        const ahora = new Date();
+        return ahora.getFullYear() + '-' +
+            String(ahora.getMonth() + 1).padStart(2, '0') + '-' +
+            String(ahora.getDate()).padStart(2, '0');
+    };
+    const hoyStr = getHoyStr();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -43,7 +52,13 @@ export default function BloquearModal({ show, onClose, fetchAreas, areaId }) {
                 fetchAreas();
                 onClose();
             } else {
-                const errorDelServidor = await response.text();
+                let errorDelServidor = await response.text();
+                // Limpiar JSON si viene del backend
+                try {
+                    const json = JSON.parse(errorDelServidor);
+                    errorDelServidor = json.mensaje || json.message || errorDelServidor;
+                } catch(e){}
+
                 Swal.fire('Fallo en el servidor', errorDelServidor, 'error');
             }
         } catch (error) {
@@ -80,6 +95,7 @@ export default function BloquearModal({ show, onClose, fetchAreas, areaId }) {
                                 <input
                                     type="date"
                                     required
+                                    min={hoyStr} /* ✅ Bloquea el calendario al pasado */
                                     className="form-control bg-light border-0 shadow-none"
                                     onChange={(e) => setFormData({...formData, fechaInicioBloqueo: e.target.value})}
                                 />
@@ -89,6 +105,7 @@ export default function BloquearModal({ show, onClose, fetchAreas, areaId }) {
                                 <input
                                     type="date"
                                     required
+                                    min={formData.fechaInicioBloqueo || hoyStr} /* ✅ No deja que termine antes de empezar */
                                     className="form-control bg-light border-0 shadow-none"
                                     onChange={(e) => setFormData({...formData, fechaFinBloqueo: e.target.value})}
                                 />
