@@ -49,7 +49,6 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 
     long countByFechaAndEstado(String fecha, String estado);
 
-    // ✅ OPTIMIZACIÓN 1: Paginación ordenada. Agregamos el ORDER BY r.id DESC para que la web no se trabe
     @EntityGraph(attributePaths = {"usuario", "area"})
     @Query("SELECT r FROM Reserva r LEFT JOIN r.usuario u LEFT JOIN r.area a WHERE " +
             "(LOWER(u.nombre) LIKE LOWER(CONCAT('%', :termino, '%')) OR " +
@@ -58,12 +57,15 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
             "ORDER BY r.id DESC")
     Page<Reserva> buscarConPaginacion(@Param("termino") String termino, Pageable pageable);
 
-    // ✅ OPTIMIZACIÓN 2: Actualización masiva (Bulk Update) directamente en la BD
     @Modifying
     @Query("UPDATE Reserva r SET r.estado = 'COMPLETADA' WHERE r.estado = 'CONFIRMADA' AND (r.fecha < :fechaHoy OR (r.fecha = :fechaHoy AND r.horaFin < :horaActual))")
     int marcarVencidasComoCompletadas(@Param("fechaHoy") String fechaHoy, @Param("horaActual") String horaActual);
 
-    // Métodos del Dashboard...
+    // ✅ NUEVO: Query con JOIN FETCH para la exportación PDF (evita LazyInitializationException)
+    @Query("SELECT r FROM Reserva r JOIN FETCH r.usuario JOIN FETCH r.area WHERE r.fecha >= :fechaInicio AND r.fecha <= :fechaFin ORDER BY r.fecha DESC, r.id DESC")
+    List<Reserva> findParaExportPdf(@Param("fechaInicio") String fechaInicio, @Param("fechaFin") String fechaFin);
+
+    // Métodos del Dashboard
     long countByEstadoIgnoreCase(String estado);
 
     @Query("SELECT COUNT(r) FROM Reserva r WHERE r.fecha = :fecha AND r.estado IN ('CONFIRMADA', 'COMPLETADA')")

@@ -9,6 +9,7 @@ import mx.edu.utez.Integradora5A_SIGRAD.repository.ReservaRepository;
 import mx.edu.utez.Integradora5A_SIGRAD.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -16,24 +17,16 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
 public class ReservaService {
 
-    private static final Pattern ISO_DATE_IN_TEXT = Pattern.compile("(\\d{4}-\\d{2}-\\d{2})");
-
     @Autowired private ReservaRepository reservaRepository;
     @Autowired private AreaRepository areaRepository;
     @Autowired private UsuarioRepository usuarioRepository;
 
-    // MÉTODO AUXILIAR PARA REVISAR SI YA PASÓ LA HORA (Para cancelar manual)
     private boolean isReservaPasada(String fechaStr, String horaFinStr) {
         try {
             LocalDate fecha = LocalDate.parse(fechaStr);
@@ -50,7 +43,6 @@ public class ReservaService {
             LocalDate fechaReserva = LocalDate.parse(fechaStr);
             LocalTime horaInicio = LocalTime.parse(horaInicioStr);
             LocalDateTime fechaHoraReserva = LocalDateTime.of(fechaReserva, horaInicio);
-
             if (fechaHoraReserva.isBefore(LocalDateTime.now())) {
                 throw new Exception("No puedes agendar ni editar una reserva con una fecha u hora que ya pasó.");
             }
@@ -59,42 +51,21 @@ public class ReservaService {
         }
     }
 
-    // ✅ OPTIMIZACIÓN GIGANTE: Actualizamos miles de reservas vencidas en 2 milisegundos directamente en SQL
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void actualizarEstadosVencidos() {
         String fechaHoy = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         String horaActual = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"));
         reservaRepository.marcarVencidasComoCompletadas(fechaHoy, horaActual);
     }
 
+    // ✅ CORREGIDO: Ya NO llama a actualizarEstadosVencidos() aquí adentro.
+    // Oracle lanza ORA-12838 cuando intentas hacer SELECT sobre una tabla que
+    // acabas de modificar con UPDATE en paralelo dentro del mismo flujo.
+    // La solución es que el controller llame primero al update y luego a este
+    // método por separado, sin mezclarlos en la misma cadena transaccional.
+    @Transactional(readOnly = true)
     public List<Reserva> listarReservasParaExportPdf(LocalDate inicio, LocalDate fin) {
-        actualizarEstadosVencidos();
-        return reservaRepository.findAll().stream()
-                .filter(r -> parseFechaReserva(r.getFecha())
-                        .map(d -> !d.isBefore(inicio) && !d.isAfter(fin))
-                        .orElse(false))
-                .sorted(Comparator
-                        .comparing((Reserva r) -> parseFechaReserva(r.getFecha()).orElse(LocalDate.MIN)).reversed()
-                        .thenComparing(r -> r.getId() != null ? r.getId() : 0L, Comparator.reverseOrder()))
-                .collect(Collectors.toList());
-    }
-
-    private Optional<LocalDate> parseFechaReserva(String raw) {
-        if (raw == null) return Optional.empty();
-        String s = raw.trim();
-        if (s.isEmpty()) return Optional.empty();
-        Matcher iso = ISO_DATE_IN_TEXT.matcher(s);
-        if (iso.find()) {
-            try { return Optional.of(LocalDate.parse(iso.group(1))); }
-            catch (DateTimeParseException ignored) {}
-        }
-        try { return Optional.of(LocalDate.parse(s)); }
-        catch (DateTimeParseException e) {
-            try { return Optional.of(LocalDate.parse(s, DateTimeFormatter.ofPattern("dd/MM/yyyy"))); }
-            catch (DateTimeParseException e2) {
-                try { return Optional.of(LocalDate.parse(s, DateTimeFormatter.ofPattern("d/M/yyyy"))); }
-                catch (DateTimeParseException e3) { return Optional.empty(); }
-            }
-        }
+        return reservaRepository.findParaExportPdf(inicio.toString(), fin.toString());
     }
 
     public Reserva crearReserva(ReservaDTO dto) throws Exception {
@@ -214,6 +185,4 @@ public class ReservaService {
 
         return reservaRepository.save(existente);
     }
-
-
 }

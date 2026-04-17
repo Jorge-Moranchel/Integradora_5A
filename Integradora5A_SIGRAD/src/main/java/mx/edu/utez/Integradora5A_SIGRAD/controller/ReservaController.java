@@ -27,7 +27,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/reservas")
-@CrossOrigin(originPatterns = "*")
 public class ReservaController {
 
     @Autowired
@@ -39,7 +38,6 @@ public class ReservaController {
 
     @GetMapping("/listar")
     public ResponseEntity<List<Reserva>> listarTodasLasReservas() {
-        // 👇 Disparamos la limpieza de estados antes de entregar datos 👇
         reservaService.actualizarEstadosVencidos();
         List<Reserva> reservas = reservaRepository.findAll();
         return ResponseEntity.ok(reservas);
@@ -51,18 +49,17 @@ public class ReservaController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "") String termino) {
 
-        // 👇 Disparamos la limpieza de estados antes de entregar datos 👇
         reservaService.actualizarEstadosVencidos();
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
         Page<Reserva> reservas = reservaRepository.buscarConPaginacion(termino, pageable);
-
         return ResponseEntity.ok(reservas);
     }
 
-    /**
-     * POST + JSON: evita que el navegador ignore query params al abrir PDF en nueva pestaña
-     * y garantiza que fechaInicio / fechaFin lleguen tal cual al servidor.
-     */
+    // ✅ CORREGIDO: Se eliminó @Transactional de aquí.
+    // Se llama actualizarEstadosVencidos() primero (tiene su propio REQUIRES_NEW
+    // y hace commit solo). Luego, en una llamada completamente separada, se consultan
+    // las reservas. Así Oracle no ve un UPDATE y un SELECT en paralelo sobre la misma
+    // tabla, lo que causaba el ORA-12838.
     @PostMapping(value = "/exportar-pdf", consumes = MediaType.APPLICATION_JSON_VALUE)
     public void exportarPDF(@RequestBody Map<String, String> body, HttpServletResponse response) throws IOException {
         if (body == null) {
@@ -91,9 +88,12 @@ public class ReservaController {
             return;
         }
 
-        String desde = inicio.toString();
-        String hasta = fin.toString();
+        // ✅ Paso 1: actualizar estados — hace su propio commit con REQUIRES_NEW y termina.
+        reservaService.actualizarEstadosVencidos();
+
+        // ✅ Paso 2: ahora sí consultamos. Transacción completamente nueva, sin conflicto.
         List<Reserva> listReservas = reservaService.listarReservasParaExportPdf(inicio, fin);
+
         if (listReservas.isEmpty()) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
@@ -104,14 +104,12 @@ public class ReservaController {
         }
 
         response.setContentType("application/pdf");
-        DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
+        DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
         String currentDateTime = dateFormatter.format(new Date());
+        response.setHeader("Content-Disposition",
+                "attachment; filename=\"historial_reservas_" + currentDateTime + ".pdf\"");
 
-        String headerKey = "Content-Disposition";
-        String headerValue = "attachment; filename=historial_reservas_" + currentDateTime + ".pdf";
-        response.setHeader(headerKey, headerValue);
-
-        pdfExportService.exportReservasToPdf(response, listReservas, desde, hasta);
+        pdfExportService.exportReservasToPdf(response, listReservas, inicio.toString(), fin.toString());
     }
 
     @PostMapping("/crear")
@@ -141,7 +139,6 @@ public class ReservaController {
 
     @GetMapping("/usuario/{idUsuario}")
     public ResponseEntity<List<Reserva>> listarReservasPorUsuario(@PathVariable Long idUsuario) {
-        // 👇 Disparamos la limpieza de estados antes de entregar datos 👇
         reservaService.actualizarEstadosVencidos();
         List<Reserva> misReservas = reservaRepository.findByUsuarioId(idUsuario);
         return ResponseEntity.ok(misReservas);
