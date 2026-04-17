@@ -38,6 +38,21 @@ public class Area {
     public Area() {
     }
 
+    // ✅ NUEVO: Constructor optimizado SIN la imagen para que la BD no la descargue
+    public Area(Long id, String nombre, String tipo, String ubicacion, String horaApertura, String horaCierre, String estado, String motivoBloqueo, String fechaInicioBloqueo, String fechaFinBloqueo) {
+        this.id = id;
+        this.nombre = nombre;
+        this.tipo = tipo;
+        this.ubicacion = ubicacion;
+        this.horaApertura = horaApertura;
+        this.horaCierre = horaCierre;
+        this.estado = estado;
+        this.motivoBloqueo = motivoBloqueo;
+        this.fechaInicioBloqueo = fechaInicioBloqueo;
+        this.fechaFinBloqueo = fechaFinBloqueo;
+        this.imagen = null; // Forzamos a que sea nulo para ahorrar muchísima memoria y tiempo
+    }
+
     // Getters y Setters
     public Long getId() {
         return id;

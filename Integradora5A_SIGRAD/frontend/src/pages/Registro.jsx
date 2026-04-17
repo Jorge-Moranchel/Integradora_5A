@@ -3,6 +3,7 @@ import Swal from 'sweetalert2';
 
 export default function Registro() {
     const [roles, setRoles] = useState([]);
+    const [divisiones, setDivisiones] = useState([]);
     const [rol, setRol] = useState('');
     const [nombre, setNombre] = useState('');
     const [matricula, setMatricula] = useState('');
@@ -10,6 +11,10 @@ export default function Registro() {
     const [carrera, setCarrera] = useState('');
     const [emailInstitucional, setEmailInstitucional] = useState('');
     const [contrasena, setContrasena] = useState('');
+
+    const rolUp = (rol || '').toUpperCase();
+    const esAdministrativo = rolUp === 'ADMINISTRATIVO';que
+    const esCodigoTrabajador = rolUp === 'DOCENTE' || esAdministrativo;
 
     useEffect(() => {
         const cargarRoles = async () => {
@@ -28,7 +33,27 @@ export default function Registro() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const labelMatricula = rol === 'DOCENTE' ? 'Código de Trabajador' : 'Matrícula';
+    useEffect(() => {
+        const cargarDivisiones = async () => {
+            try {
+                const res = await fetch('http://localhost:8080/api/divisiones/listar');
+                if (!res.ok) return;
+                const data = await res.json();
+                const lista = Array.isArray(data) ? data : [];
+                setDivisiones(lista.filter((d) => d.habilitada));
+            } catch (e) {
+                setDivisiones([]);
+            }
+        };
+        cargarDivisiones();
+    }, []);
+
+    useEffect(() => {
+        setMatricula('');
+        setCarrera('');
+    }, [rol]);
+
+    const labelMatricula = esCodigoTrabajador ? 'Código de Trabajador' : 'Matrícula';
 
     const handleRegistro = async (e) => {
         e.preventDefault();
@@ -40,7 +65,7 @@ export default function Registro() {
                 body: JSON.stringify({
                     rol,
                     nombre,
-                    matricula, // aunque sea docente, el back lo sigue esperando con esta llave
+                    matricula, // estudiante=matrícula; docente y administrativo=código de trabajador
                     telefono,
                     carrera,
                     emailInstitucional,
@@ -135,13 +160,31 @@ export default function Registro() {
                     </div>
 
                     <div className="mb-3">
-                        <label className="form-label fw-bold small">Carrera</label>
-                        <input
-                            type="text"
-                            className="form-control bg-light border-0 py-2"
-                            value={carrera}
-                            onChange={(e) => setCarrera(e.target.value)}
-                        />
+                        <label className="form-label fw-bold small">
+                            {esAdministrativo ? 'División académica' : 'Carrera'}
+                        </label>
+                        {esAdministrativo ? (
+                            <select
+                                className="form-select bg-light border-0 py-2"
+                                value={carrera}
+                                onChange={(e) => setCarrera(e.target.value)}
+                                required
+                            >
+                                <option value="">Seleccionar división...</option>
+                                {divisiones.map((d) => (
+                                    <option key={d.id} value={d.nombre}>
+                                        {d.nombre}
+                                    </option>
+                                ))}
+                            </select>
+                        ) : (
+                            <input
+                                type="text"
+                                className="form-control bg-light border-0 py-2"
+                                value={carrera}
+                                onChange={(e) => setCarrera(e.target.value)}
+                            />
+                        )}
                     </div>
 
                     <div className="mb-3">

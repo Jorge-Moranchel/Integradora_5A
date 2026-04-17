@@ -25,6 +25,9 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody Map<String, String> request) {
         String correo = request.get("correo");
         String password = request.get("password");
+        // ✅ NUEVO: Recibimos un parámetro extra desde React para saber si es la Web
+        boolean esWeb = Boolean.parseBoolean(request.getOrDefault("esWeb", "false"));
+
         Map<String, Object> response = new HashMap<>();
 
         if (correo == null || correo.trim().isEmpty() || password == null || password.trim().isEmpty()) {
@@ -33,12 +36,19 @@ public class AuthController {
 
         Optional<Usuario> userOpt = usuarioRepository.findByEmailInstitucional(correo);
 
-        // 1. SEGURIDAD: Validamos que exista Y que la contraseña coincida en el mismo paso
         if (!userOpt.isPresent() || !Objects.equals(userOpt.get().getContrasena(), password)) {
             throw new UnauthorizedException("El correo y/o la contraseña son incorrectos.");
         }
 
         Usuario user = userOpt.get();
+
+        // ✅ NUEVA REGLA ESTRICTA PARA LA WEB
+        if (esWeb) {
+            // Si intenta entrar a la web y NO es el ID 103 (o el rol ADMINISTRADOR si prefieres), lo pateamos
+            if (user.getId() != 103L) {
+                throw new UnauthorizedException("Acceso denegado. Solo el administrador principal puede entrar a este panel.");
+            }
+        }
 
         if (user.getEstado() != null && !user.getEstado()) {
             throw new UnauthorizedException("Tu cuenta ha sido bloqueada. Contacta a un administrador.");

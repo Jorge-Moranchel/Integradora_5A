@@ -15,7 +15,8 @@ import java.util.List;
 @Service
 public class PdfExportService {
 
-    public void exportReservasToPdf(HttpServletResponse response, List<Reserva> reservas) throws IOException {
+    public void exportReservasToPdf(HttpServletResponse response, List<Reserva> reservas,
+                                    String fechaInicio, String fechaFin) throws IOException {
         Document document = new Document(PageSize.A4);
         PdfWriter.getInstance(document, response.getOutputStream());
 
@@ -24,17 +25,25 @@ public class PdfExportService {
         // Título del PDF
         Font fontTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD);
         fontTitle.setSize(18);
-        fontTitle.setColor(new Color(44, 62, 80)); // Azul marino
+        fontTitle.setColor(new Color(44, 62, 80));
 
         Paragraph p = new Paragraph("Historial de Reservas Deportivas\n", fontTitle);
         p.setAlignment(Paragraph.ALIGN_CENTER);
         document.add(p);
 
-        // Tabla de datos (Ahora son 6 columnas)
+        if (fechaInicio != null && fechaFin != null && !fechaInicio.isBlank() && !fechaFin.isBlank()) {
+            Font fontSub = FontFactory.getFont(FontFactory.HELVETICA);
+            fontSub.setSize(11);
+            fontSub.setColor(new Color(80, 80, 80));
+            Paragraph sub = new Paragraph("Del " + fechaInicio + " al " + fechaFin + "\n\n", fontSub);
+            sub.setAlignment(Paragraph.ALIGN_CENTER);
+            document.add(sub);
+        }
+
+        // Tabla con 6 columnas
         PdfPTable table = new PdfPTable(6);
         table.setWidthPercentage(100);
         table.setSpacingBefore(15);
-        // Ajustamos los anchos para que quepa todo bien
         table.setWidths(new float[] {2.5f, 1.5f, 2.0f, 1.5f, 2.0f, 1.5f});
 
         // Encabezados
@@ -43,25 +52,43 @@ public class PdfExportService {
         // Llenar tabla con los datos
         for (Reserva reserva : reservas) {
             // Usuario
-            table.addCell(reserva.getUsuario() != null ? reserva.getUsuario().getNombre() : "N/A");
+            String nombreUsuario = "N/A";
+            if (reserva.getUsuario() != null && reserva.getUsuario().getNombre() != null) {
+                nombreUsuario = reserva.getUsuario().getNombre();
+            }
+            table.addCell(nombreUsuario);
 
-            // Rol (NUEVO)
-            table.addCell(reserva.getUsuario() != null && reserva.getUsuario().getRol() != null ?
-                    reserva.getUsuario().getRol() : "N/A");
+            // ✅ CORREGIDO: getRol() devuelve String directamente en el modelo Usuario
+            // Si en tu entidad Usuario el campo rol es String, esto funciona tal cual.
+            // Si fuera una entidad Rol, cambiar a: reserva.getUsuario().getRol().getNombre()
+            String rolUsuario = "N/A";
+            if (reserva.getUsuario() != null && reserva.getUsuario().getRol() != null) {
+                rolUsuario = reserva.getUsuario().getRol();
+            }
+            table.addCell(rolUsuario);
 
             // Área deportiva
-            table.addCell(reserva.getArea() != null ? reserva.getArea().getNombre() : "N/A");
+            String nombreArea = "N/A";
+            if (reserva.getArea() != null && reserva.getArea().getNombre() != null) {
+                nombreArea = reserva.getArea().getNombre();
+            }
+            table.addCell(nombreArea);
 
             // Fecha
-            table.addCell(reserva.getFecha());
+            String fecha = reserva.getFecha() != null ? reserva.getFecha() : "N/A";
+            table.addCell(fecha);
 
             // Horario (Inicio - Fin)
-            String horario = reserva.getHoraInicio() + " - " + reserva.getHoraFin();
-            table.addCell(horario);
+            String horaInicio = reserva.getHoraInicio() != null ? reserva.getHoraInicio() : "N/A";
+            String horaFin = reserva.getHoraFin() != null ? reserva.getHoraFin() : "N/A";
+            table.addCell(horaInicio + " - " + horaFin);
 
-            // Estado
-            String estado = reserva.getEstado() != null ?
-                    reserva.getEstado().substring(0, 1).toUpperCase() + reserva.getEstado().substring(1).toLowerCase() : "N/A";
+            // Estado con primera letra mayúscula
+            String estado = "N/A";
+            if (reserva.getEstado() != null && !reserva.getEstado().isEmpty()) {
+                estado = reserva.getEstado().substring(0, 1).toUpperCase()
+                        + reserva.getEstado().substring(1).toLowerCase();
+            }
             table.addCell(estado);
         }
 
@@ -71,7 +98,7 @@ public class PdfExportService {
 
     private void writeTableHeader(PdfPTable table) {
         PdfPCell cell = new PdfPCell();
-        cell.setBackgroundColor(new Color(0, 168, 84)); // Verde esmeralda
+        cell.setBackgroundColor(new Color(0, 168, 84));
         cell.setPadding(5);
 
         Font font = FontFactory.getFont(FontFactory.HELVETICA_BOLD);
@@ -79,7 +106,6 @@ public class PdfExportService {
 
         cell.setPhrase(new Phrase("Usuario", font));
         table.addCell(cell);
-        // Nuevo encabezado para el Rol
         cell.setPhrase(new Phrase("Rol", font));
         table.addCell(cell);
         cell.setPhrase(new Phrase("Área", font));

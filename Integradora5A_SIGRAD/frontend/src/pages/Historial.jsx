@@ -10,14 +10,11 @@ export default function Historial() {
     const [showModal, setShowModal] = useState(false);
     const [reservaAEditar, setReservaAEditar] = useState(null);
 
-    // 👇 ESTADOS DE PAGINACIÓN BACKEND (Spring Boot empieza en página 0) 👇
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [totalElements, setTotalElements] = useState(0);
 
-    // Cada vez que cambie la página o la búsqueda, llamamos al backend
     useEffect(() => {
-        // Un pequeño retraso (debounce) para no saturar el backend si escriben muy rápido en el buscador
         const delayDebounceFn = setTimeout(() => {
             fetchReservas();
         }, 300);
@@ -27,11 +24,10 @@ export default function Historial() {
     const fetchReservas = async () => {
         setLoading(true);
         try {
-            // Mandamos los parámetros exactos a nuestro nuevo endpoint de Spring Boot
             const response = await fetch(`http://localhost:8080/api/reservas/paginadas?page=${currentPage}&size=10&termino=${busqueda}`);
             if (response.ok) {
                 const data = await response.json();
-                setReservas(data.content); // Spring Boot guarda la lista dentro de "content"
+                setReservas(data.content);
                 setTotalPages(data.totalPages);
                 setTotalElements(data.totalElements);
             }
@@ -42,14 +38,103 @@ export default function Historial() {
         }
     };
 
-    // Si el usuario escribe en el buscador, lo regresamos a la página 1 (índice 0)
     const handleBusquedaChange = (e) => {
         setBusqueda(e.target.value);
         setCurrentPage(0);
     };
 
     const handleExport = () => {
-        window.open('http://localhost:8080/api/reservas/exportar-pdf', '_blank');
+        let rangoSeleccionado = null;
+
+        Swal.fire({
+            title: 'Exportar historial en PDF',
+            html: `
+                <div class="text-start px-1">
+                    <label class="form-label small fw-bold mb-1 d-block">Fecha de inicio</label>
+                    <input id="swal-fecha-inicio" type="date" class="form-control mb-3" />
+                    <label class="form-label small fw-bold mb-1 d-block">Fecha de fin</label>
+                    <input id="swal-fecha-fin" type="date" class="form-control" />
+                </div>
+            `,
+            width: '28rem',
+            showCancelButton: true,
+            cancelButtonText: 'Cancelar',
+            confirmButtonText: 'Confirmar',
+            reverseButtons: false,
+            confirmButtonColor: '#0d6efd',
+            cancelButtonColor: '#6c757d',
+            focusConfirm: false,
+            didOpen: () => {
+                const actions = Swal.getActions();
+                const cancelBtn = Swal.getCancelButton();
+                const confirmBtn = Swal.getConfirmButton();
+                if (actions && cancelBtn && confirmBtn) {
+                    actions.style.display = 'flex';
+                    actions.style.flexDirection = 'row';
+                    actions.style.justifyContent = 'center';
+                    actions.style.gap = '0.75rem';
+                    cancelBtn.style.order = '0';
+                    confirmBtn.style.order = '1';
+                }
+            },
+            preConfirm: () => {
+                const popup = Swal.getPopup();
+                const inicio = popup?.querySelector('#swal-fecha-inicio')?.value;
+                const fin = popup?.querySelector('#swal-fecha-fin')?.value;
+                if (!inicio || !fin) {
+                    Swal.showValidationMessage('Indica la fecha de inicio y la fecha de fin');
+                    return false;
+                }
+                if (inicio > fin) {
+                    Swal.showValidationMessage('La fecha de inicio no puede ser posterior a la fecha de fin');
+                    return false;
+                }
+                rangoSeleccionado = { inicio, fin };
+                return true;
+            }
+        }).then(async (result) => {
+            if (!result.isConfirmed || !rangoSeleccionado) return;
+            const { inicio, fin } = rangoSeleccionado;
+
+            try {
+                const res = await fetch('http://localhost:8080/api/reservas/exportar-pdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Accept: 'application/pdf' },
+                    body: JSON.stringify({ fechaInicio: inicio, fechaFin: fin })
+                });
+
+                if (!res.ok) {
+                    let msg = 'No se pudo generar el PDF';
+                    let titulo = 'Error';
+                    try {
+                        const text = await res.text();
+                        if (text) {
+                            try {
+                                const j = JSON.parse(text);
+                                msg = j.mensaje || j.message || text;
+                            } catch {
+                                msg = text;
+                            }
+                        }
+                        if (res.status === 404) titulo = 'Sin reservas';
+                    } catch (_) {}
+                    Swal.fire(titulo, msg, res.status === 404 ? 'info' : 'error');
+                    return;
+                }
+
+                const blob = await res.blob();
+                const href = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = href;
+                a.download = `historial_reservas_${inicio}_${fin}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(href);
+            } catch (e) {
+                Swal.fire('Error', 'No se pudo descargar el PDF. Revisa la conexión con el servidor.', 'error');
+            }
+        });
     };
 
     const abrirModalNuevaReserva = () => {
@@ -106,7 +191,6 @@ export default function Historial() {
                         className="btn btn-primary d-flex align-items-center gap-2 px-4 py-2 fw-bold shadow-sm"
                         style={{ borderRadius: '12px', border: 'none' }}
                         onClick={handleExport}
-                        disabled={totalElements === 0}
                     >
                         <Download size={20} /> Exportar
                     </button>
@@ -142,8 +226,7 @@ export default function Historial() {
                             <table className="table table-hover align-middle">
                                 <thead className="table-light">
                                 <tr className="small text-muted text-uppercase fw-bold">
-                                    <th className="ps-4 py-3">ID</th>
-                                    <th>Usuario</th>
+                                    <th className="ps-4 py-3">Usuario</th>
                                     <th>Rol</th>
                                     <th>Área Deportiva</th>
                                     <th>Fecha</th>
@@ -155,8 +238,7 @@ export default function Historial() {
                                 <tbody>
                                 {reservas.map((reserva) => (
                                     <tr key={reserva.id} className="border-bottom border-light">
-                                        <td className="ps-4 fw-bold text-muted">#{reserva.id}</td>
-                                        <td className="fw-semibold text-dark">{reserva.usuario ? reserva.usuario.nombre : 'N/A'}</td>
+                                        <td className="ps-4 fw-semibold text-dark">{reserva.usuario ? reserva.usuario.nombre : 'N/A'}</td>
                                         <td>
                                             <span className="badge bg-info bg-opacity-10 text-info fw-bold">
                                                 {reserva.usuario && reserva.usuario.rol ? reserva.usuario.rol : 'N/A'}
@@ -168,9 +250,11 @@ export default function Historial() {
                                         <td className="text-center">
                                             <span className={`badge ${
                                                 reserva.estado === 'CONFIRMADA' ? 'bg-success bg-opacity-10 text-success' :
-                                                    reserva.estado === 'CANCELADA' ? 'bg-danger bg-opacity-10 text-danger' : 'bg-secondary bg-opacity-10 text-secondary'
-                                            }`} style={{ fontSize: '11px', letterSpacing: '0.5px' }}>
-                                                {reserva.estado}
+                                                    reserva.estado === 'CANCELADA'  ? 'bg-danger bg-opacity-10 text-danger'  :
+                                                        'bg-secondary bg-opacity-10 text-secondary'
+                                            }`} style={{ fontSize: '11px', letterSpacing: '0.5px', minWidth: '90px', display: 'inline-block', textAlign: 'center' }}>
+                                                {reserva.estado === 'CONFIRMADA' ? 'Activo' :
+                                                    reserva.estado === 'CANCELADA'  ? 'Cancelado' : 'Finalizado'}
                                             </span>
                                         </td>
                                         <td className="text-center pe-4">
@@ -178,8 +262,7 @@ export default function Historial() {
                                                 <button
                                                     className="btn btn-sm btn-light border-0 p-2 shadow-sm rounded-3 text-primary"
                                                     onClick={() => abrirModalEditarReserva(reserva)}
-                                                    disabled={reserva.estado === 'COMPLETADA' || reserva.estado === 'CANCELADA'}
-                                                    title={reserva.estado === 'COMPLETADA' || reserva.estado === 'CANCELADA' ? 'Solo se pueden editar reservas CONFIRMADAS' : 'Editar reserva'}
+                                                    title={reserva.estado === 'CONFIRMADA' ? 'Editar reserva' : 'Ver detalle de reserva'}
                                                 >
                                                     <Edit size={16} />
                                                 </button>
@@ -204,7 +287,6 @@ export default function Historial() {
                             </table>
                         </div>
 
-                        {/* 👇 PAGINADOR CONECTADO AL BACKEND 👇 */}
                         {totalPages > 1 && (
                             <div className="d-flex justify-content-between align-items-center mt-4 pt-3 border-top border-light">
                                 <span className="text-muted small">
