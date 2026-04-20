@@ -59,6 +59,7 @@ public class AreaService {
         nuevaArea.setHoraApertura(dto.getHoraApertura());
         nuevaArea.setHoraCierre(dto.getHoraCierre());
         nuevaArea.setImagen(dto.getImagen());
+        nuevaArea.setTipo(dto.getTipo());
         nuevaArea.setEstado("disponible");
 
         return areaRepository.save(nuevaArea);
@@ -127,6 +128,7 @@ public class AreaService {
         areaActual.setUbicacion(dto.getUbicacion());
         areaActual.setHoraApertura(dto.getHoraApertura());
         areaActual.setHoraCierre(dto.getHoraCierre());
+        areaActual.setTipo(dto.getTipo());
 
         if (dto.getImagen() != null && !dto.getImagen().isEmpty()) {
             areaActual.setImagen(dto.getImagen());

@@ -7,9 +7,18 @@ public class AreaDTO {
     private String horaApertura;
     private String horaCierre;
     private String imagen;
-
+    private String tipo;
     // Constructor vacío
+
     public AreaDTO() {
+    }
+
+    public String getTipo() {
+        return tipo;
+    }
+
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
     }
 
     // Getters y Setters

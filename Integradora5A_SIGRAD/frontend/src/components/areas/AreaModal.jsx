@@ -6,6 +6,7 @@ export default function AreaModal({ show, onClose, fetchAreas, areaToEdit }) {
   const [formData, setFormData] = useState({
     nombre: '',
     ubicacion: '',
+    tipo: '',
     horaApertura: '',
     horaCierre: '',
     imagen: ''
@@ -16,13 +17,14 @@ export default function AreaModal({ show, onClose, fetchAreas, areaToEdit }) {
       setFormData({
         nombre: areaToEdit.nombre,
         ubicacion: areaToEdit.ubicacion,
+        tipo: areaToEdit.tipo,
         horaApertura: areaToEdit.horaApertura,
         horaCierre: areaToEdit.horaCierre,
         imagen: ''
       });
     } else {
       setFormData({
-        nombre: '', ubicacion: '', horaApertura: '', horaCierre: '', imagen: ''
+        nombre: '', ubicacion: '',tipo: '', horaApertura: '', horaCierre: '', imagen: ''
       });
     }
   }, [areaToEdit, show]);
@@ -127,6 +129,18 @@ export default function AreaModal({ show, onClose, fetchAreas, areaToEdit }) {
                     placeholder="Ej: Detrás del edificio 5, junto al estacionamiento"
                     value={formData.ubicacion}
                     onChange={(e) => setFormData({...formData, ubicacion: e.target.value})}
+                ></textarea>
+              </div>
+
+              <div className="mb-3">
+                <label className="form-label small fw-bold">Tipo de deporte <span className="text-danger">*</span></label>
+                <textarea
+                    required
+                    className="form-control bg-light border-0 py-2"
+                    rows="2"
+                    placeholder="Ej: futbol, juego de contacto"
+                    value={formData.tipo}
+                    onChange={(e) => setFormData({...formData, tipo: e.target.value})}
                 ></textarea>
               </div>
 
