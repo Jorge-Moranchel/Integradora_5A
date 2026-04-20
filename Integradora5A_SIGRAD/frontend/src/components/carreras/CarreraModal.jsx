@@ -25,6 +25,14 @@ export default function CarreraModal({ show, onClose, onRefresh, carreraToEdit }
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        if (!abreviatura|| abreviatura.trim()===""){
+            Swal.fire(
+                '¡Error!',
+                'La abrevitura no puede ser vacia',
+                'error'
+            );
+            return;
+        }
         // Elegimos dinámicamente la URL y el Método
         const url = carreraToEdit
             ? `http://localhost:8080/api/carreras/actualizar/${carreraToEdit.id}`
@@ -88,7 +96,7 @@ export default function CarreraModal({ show, onClose, onRefresh, carreraToEdit }
 
                     <form onSubmit={handleSubmit}>
                         <div className="modal-body p-4">
-                            <label className="form-label fw-bold small">Nombre de la Carrera</label>
+                            <label className="form-label fw-bold small">Nombre de la Carrera*</label>
                             <input
                                 type="text"
                                 className="form-control bg-light border-0 py-2"
@@ -99,7 +107,7 @@ export default function CarreraModal({ show, onClose, onRefresh, carreraToEdit }
                             />
 
                             <div className="mt-3">
-                                <label className="form-label fw-bold small">Abreviatura</label>
+                                <label className="form-label fw-bold small">Abreviatura*</label>
                                 <input
                                     type="text"
                                     className="form-control bg-light border-0 py-2"

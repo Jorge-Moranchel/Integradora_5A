@@ -25,6 +25,9 @@ public class CarreraService {
         if (carrera.getNombre() == null || carrera.getNombre().trim().isEmpty()) {
             throw new Exception("El nombre de la carrera es obligatorio");
         }
+        if (carrera.getAbreviatura()== null || carrera.getAbreviatura().trim().isEmpty()){
+            throw new Exception("La abreviatura de la carrera es obligatoria");
+        }
         return carreraRepository.save(carrera);
     }
 
@@ -37,7 +40,7 @@ public class CarreraService {
         }
 
         existente.setNombre(carreraUpdate.getNombre());
-        existente.setAbreviatura(carreraUpdate.getAbreviatura());
+        existente.setAbreviatura(carreraUpdate.getAbreviatura().trim());
         existente.setDescripcion(carreraUpdate.getDescripcion());
         return carreraRepository.save(existente);
     }
@@ -49,5 +52,20 @@ public class CarreraService {
         // Invertimos el estado (Si era true pasa a false, y viceversa)
         existente.setHabilitada(!existente.getHabilitada());
         return carreraRepository.save(existente);
+    }
+
+    private String abreviatura(String nombre){
+        if (nombre== null || nombre.trim().isEmpty()){
+                return "";
+        }
+        Carrera carrera = new Carrera();
+        String [] abreviatura=nombre.trim().split("\\s+");
+        StringBuilder iniciales=new StringBuilder();
+        for (String inicial: abreviatura){
+            if (inicial.length()>2){
+                iniciales.append(inicial.charAt(0));
+            }
+        }
+        return iniciales.toString().toUpperCase();
     }
 }
