@@ -17,6 +17,7 @@ export default function AreaModal({ show, onClose, fetchAreas, areaToEdit }) {
       setFormData({
         nombre: areaToEdit.nombre,
         ubicacion: areaToEdit.ubicacion,
+        tipo: areaToEdit.tipo,
         horaApertura: areaToEdit.horaApertura,
         horaCierre: areaToEdit.horaCierre,
         imagen: ''
