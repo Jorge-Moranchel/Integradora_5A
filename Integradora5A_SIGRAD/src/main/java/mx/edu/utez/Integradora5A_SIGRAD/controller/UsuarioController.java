@@ -1,5 +1,6 @@
 package mx.edu.utez.Integradora5A_SIGRAD.controller;
 
+import jakarta.validation.Valid;
 import mx.edu.utez.Integradora5A_SIGRAD.model.Usuario;
 import mx.edu.utez.Integradora5A_SIGRAD.dto.UsuarioDTO;
 import mx.edu.utez.Integradora5A_SIGRAD.exception.ResourceNotFoundException;
@@ -31,7 +32,7 @@ public class UsuarioController {
 
     // 2. REGISTRAR NUEVO USUARIO
     @PostMapping("/registrar")
-    public ResponseEntity<?> registrarUsuario(@RequestBody UsuarioDTO usuario) {
+    public ResponseEntity<?> registrarUsuario(@Valid @RequestBody UsuarioDTO usuario) {
         Usuario guardado = usuarioService.registrarUsuario(usuario);
 
         Map<String, Object> response = new HashMap<>();
@@ -42,7 +43,7 @@ public class UsuarioController {
 
     // 3. ACTUALIZAR USUARIO EXISTENTE
     @PutMapping("/actualizar/{id}")
-    public ResponseEntity<?> actualizarUsuario(@PathVariable Long id, @RequestBody Usuario usuarioActualizado) {
+    public ResponseEntity<?> actualizarUsuario(@PathVariable Long id, @Valid @RequestBody Usuario usuarioActualizado) {
         Usuario usuarioExistente = usuarioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario con ID " + id + " no encontrado."));
 

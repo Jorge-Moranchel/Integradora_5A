@@ -12,6 +12,7 @@ import Divisiones from './pages/Divisiones.jsx';
 import Sidebar from './components/layout/Sidebar';
 // ✅ IMPORTAMOS EL GUARDIÁN
 import ProtectedRoute from './components/config/ProtectedRoute';
+import Registro from "./pages/Registro.jsx";
 
 function AdminLayout({ children }) {
     return (
@@ -37,7 +38,10 @@ function App() {
                 {/* RUTAS PÚBLICAS */}
                 <Route path="/login" element={<Login />} />
 
-                {/* RUTAS PROTEGIDAS (AdminLayout hace la magia) */}
+                {/* RUTAS PROTEGIDAS (AdminLayout hace la magia)
+                 Justificar claramente cómo se accede: Para poder registrar un nuevo usuario es necesaio acceder como
+                 admin desde la ruta de "/usuarios" en el boton de nuevo usuario, al registrarlo este se vera reflejado en los usuarios,
+                 pero tendra que ser validado con el correo de verificación que se le manda  para tener acceso desde la app movil*/}
                 <Route path="/dashboard" element={<AdminLayout><Dashboard /></AdminLayout>} />
                 <Route path="/areas" element={<AdminLayout><Areas /></AdminLayout>} />
                 <Route path="/usuarios" element={<AdminLayout><Usuarios /></AdminLayout>} />

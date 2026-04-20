@@ -1,14 +1,35 @@
 package mx.edu.utez.Integradora5A_SIGRAD.dto;
 
+import jakarta.persistence.Column;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import org.springframework.format.annotation.NumberFormat;
+
 public class UsuarioDTO {
     private Long id;
+    @NotBlank(message = "El nombre es obligatorio")
     private String nombre;
+
+    @NotBlank(message = "La matricula es obligatoria")
     private String matricula;
+
+    @NotNull(message = "El telefono es obligatorio")
+    @Size(min = 10, max = 10)
     private String telefono;
+
+    @NotNull(message = "La carrera es obligatoria")
     private String carrera;
+
+    @NotNull(message = "El correo es obligatorio")
     private String emailInstitucional;
+
+    @NotNull(message = "La contraseña es obligatoria")
     private String contrasena;
+
+    @NotNull(message = "El rol es obligatorio")
     private String rol;
+
     private Boolean estado;
     private Boolean validado = false;
 

@@ -156,6 +156,9 @@ export default function Registro() {
                             className="form-control bg-light border-0 py-2"
                             value={telefono}
                             onChange={(e) => setTelefono(e.target.value)}
+                            min={10}
+                            max={10}
+                            required
                         />
                     </div>
 
