@@ -12,7 +12,7 @@ public class Area {
 
     @Column(nullable = false, unique = true)
     private String nombre;
-
+    @Column(nullable = false)
     private String tipo;
 
     @Column(nullable = false)
