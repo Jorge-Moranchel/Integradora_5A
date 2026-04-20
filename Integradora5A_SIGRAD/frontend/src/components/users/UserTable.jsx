@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit, Mail, Phone, GraduationCap, Shield } from 'lucide-react';
+import { Edit, Mail, Phone, GraduationCap, Shield, CheckCircle, Clock } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 export default function UserTable({ users, isLoading, onRefresh, onEdit }) {
