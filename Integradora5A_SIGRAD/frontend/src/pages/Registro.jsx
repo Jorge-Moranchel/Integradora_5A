@@ -13,7 +13,7 @@ export default function Registro() {
     const [contrasena, setContrasena] = useState('');
 
     const rolUp = (rol || '').toUpperCase();
-    const esAdministrativo = rolUp === 'ADMINISTRATIVO';que
+    const esAdministrativo = rolUp === 'ADMINISTRATIVO';
     const esCodigoTrabajador = rolUp === 'DOCENTE' || esAdministrativo;
 
     useEffect(() => {
