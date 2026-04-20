@@ -15,7 +15,7 @@ class RolDTOTest {
 
     @Test
     void constructorConArgumentos_asignaValoresCorrectos() {
-        RolDTO dto = new RolDTO(10L, "ADMIN");
+        RolDTO dto = new RolDTO(10L, "ADMIN", "Descricion");
 
         assertEquals(10L, dto.getId());
         assertEquals("ADMIN", dto.getNombre());

@@ -1,5 +1,6 @@
 package mx.edu.utez.Integradora5A_SIGRAD.controller;
 
+import mx.edu.utez.Integradora5A_SIGRAD.dto.UsuarioDTO;
 import mx.edu.utez.Integradora5A_SIGRAD.model.Usuario;
 import mx.edu.utez.Integradora5A_SIGRAD.repository.UsuarioRepository;
 import org.junit.jupiter.api.Test;
@@ -40,7 +41,7 @@ class UsuarioControllerTest {
 
     @Test
     void testRegistrarUsuarioBuenaPath() {
-        Usuario u = usuarioValido();
+        UsuarioDTO u = new UsuarioDTO();
         when(usuarioRepository.existsByEmailInstitucional(u.getEmailInstitucional())).thenReturn(false);
         when(usuarioRepository.save(any(Usuario.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -54,7 +55,7 @@ class UsuarioControllerTest {
 
     @Test
     void testRegistrarUsuarioMalaPath() {
-        Usuario u = new Usuario();
+        UsuarioDTO u = new UsuarioDTO();
         u.setNombre("");
 
         ResponseEntity<?> response = usuarioController.registrarUsuario(u);
@@ -101,7 +102,7 @@ class UsuarioControllerTest {
 
     @Test
     void testRegistrarUsuarioMalaPathEmailNoUtez() {
-        Usuario u = usuarioValido();
+        UsuarioDTO u = usuarioValidodto();
         u.setEmailInstitucional("x@gmail.com");
 
         ResponseEntity<?> response = usuarioController.registrarUsuario(u);
@@ -110,6 +111,15 @@ class UsuarioControllerTest {
     }
 
     // no hice test del correo duplicado (409) ni del error 500 al guardar - prioridad baja
+
+    private static UsuarioDTO usuarioValidodto() {
+        UsuarioDTO u = new UsuarioDTO();
+        u.setNombre("Ana");
+        u.setMatricula("M001");
+        u.setEmailInstitucional("ana@utez.edu.mx");
+        u.setContrasena("pass123");
+        return u;
+    }
 
     private static Usuario usuarioValido() {
         Usuario u = new Usuario();

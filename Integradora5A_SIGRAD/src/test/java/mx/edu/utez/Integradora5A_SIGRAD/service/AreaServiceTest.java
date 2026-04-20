@@ -31,6 +31,7 @@ class AreaServiceTest {
         AreaDTO dto = new AreaDTO();
         dto.setNombre("Zona1");
         dto.setUbicacion("Ubicacion1");
+        dto.setTipo("tipo1");
         dto.setHoraApertura("08:00");
         dto.setHoraCierre("17:00");
         dto.setImagen("img.png");
@@ -43,6 +44,7 @@ class AreaServiceTest {
         assertNotNull(saved);
         assertEquals("Zona1", saved.getNombre());
         assertEquals("Ubicacion1", saved.getUbicacion());
+        assertEquals("tipo1",saved.getTipo());
         assertEquals("08:00", saved.getHoraApertura());
         assertEquals("17:00", saved.getHoraCierre());
         assertEquals("img.png", saved.getImagen());
@@ -67,6 +69,7 @@ class AreaServiceTest {
         AreaDTO dto = new AreaDTO();
         dto.setNombre("Zona1");
         dto.setUbicacion("Ubicacion1");
+        dto.setTipo("tipo1");
         dto.setHoraApertura("17:00");
         dto.setHoraCierre("17:00");
         dto.setImagen("img.png");
@@ -84,6 +87,7 @@ class AreaServiceTest {
         AreaDTO dto = new AreaDTO();
         dto.setNombre("Zona1");
         dto.setUbicacion("U1");
+        dto.setTipo("t1");
         dto.setHoraApertura("08:00");
         dto.setHoraCierre("17:00");
 
@@ -100,6 +104,7 @@ class AreaServiceTest {
         areaActual.setId(id);
         areaActual.setNombre("ZonaActual");
         areaActual.setUbicacion("U1");
+        areaActual.setTipo("t1");
         areaActual.setHoraApertura("07:00");
         areaActual.setHoraCierre("16:00");
         areaActual.setImagen("old.png");
@@ -107,6 +112,7 @@ class AreaServiceTest {
         AreaDTO dto = new AreaDTO();
         dto.setNombre("ZonaNuevo");
         dto.setUbicacion("U2");
+        dto.setTipo("t2");
         dto.setHoraApertura("08:00");
         dto.setHoraCierre("17:00");
         dto.setImagen("new.png");
@@ -129,6 +135,7 @@ class AreaServiceTest {
         AreaDTO dto = new AreaDTO();
         dto.setNombre("ZonaActual");
         dto.setUbicacion("U2");
+        dto.setTipo("t2");
         dto.setHoraApertura("17:00");
         dto.setHoraCierre("17:00");
         dto.setImagen("img.png");
@@ -148,6 +155,7 @@ class AreaServiceTest {
         areaActual.setId(id);
         areaActual.setNombre("ZonaActual");
         areaActual.setUbicacion("U1");
+        areaActual.setTipo("t1");
         areaActual.setHoraApertura("07:00");
         areaActual.setHoraCierre("16:00");
         areaActual.setImagen("old.png");
@@ -155,6 +163,7 @@ class AreaServiceTest {
         AreaDTO dto = new AreaDTO();
         dto.setNombre("ZonaNuevo"); // distinto => valida duplicado
         dto.setUbicacion("U2");
+        dto.setTipo("t2");
         dto.setHoraApertura("08:00");
         dto.setHoraCierre("17:00");
         dto.setImagen(null); // cubre &&: dto.getImagen() != null es false
@@ -167,6 +176,7 @@ class AreaServiceTest {
 
         assertEquals("ZonaNuevo", saved.getNombre());
         assertEquals("U2", saved.getUbicacion());
+        assertEquals("t2", saved.getTipo());
         assertEquals("08:00", saved.getHoraApertura());
         assertEquals("17:00", saved.getHoraCierre());
         assertEquals("old.png", saved.getImagen(), "La imagen no debe cambiar cuando dto.imagen es null");
@@ -179,6 +189,7 @@ class AreaServiceTest {
         areaActual.setId(id);
         areaActual.setNombre("ZonaActual");
         areaActual.setUbicacion("U1");
+        areaActual.setTipo("t1");
         areaActual.setHoraApertura("07:00");
         areaActual.setHoraCierre("16:00");
         areaActual.setImagen("old.png");
@@ -186,6 +197,7 @@ class AreaServiceTest {
         AreaDTO dto = new AreaDTO();
         dto.setNombre("zonaactual"); // igual ignoreCase => primera parte del && es false
         dto.setUbicacion("U2");
+        dto.setTipo("t2");
         dto.setHoraApertura("08:00");
         dto.setHoraCierre("17:00");
         dto.setImagen(""); // cubre &&: dto.getImagen() != null true, pero !isEmpty false
@@ -200,6 +212,7 @@ class AreaServiceTest {
 
         assertEquals("zonaactual", saved.getNombre());
         assertEquals("U2", saved.getUbicacion());
+        assertEquals("t2", saved.getTipo());
         assertEquals("08:00", saved.getHoraApertura());
         assertEquals("17:00", saved.getHoraCierre());
         assertEquals("old.png", saved.getImagen(), "La imagen no debe cambiar cuando dto.imagen es vacia");
@@ -212,6 +225,7 @@ class AreaServiceTest {
         areaActual.setId(id);
         areaActual.setNombre("ZonaActual");
         areaActual.setUbicacion("U1");
+        areaActual.setTipo("t1");
         areaActual.setHoraApertura("07:00");
         areaActual.setHoraCierre("16:00");
         areaActual.setImagen("old.png");
@@ -219,6 +233,7 @@ class AreaServiceTest {
         AreaDTO dto = new AreaDTO();
         dto.setNombre("ZonaNuevo"); // distinto => valida duplicado
         dto.setUbicacion("U2");
+        dto.setTipo("t2");
         dto.setHoraApertura("08:00");
         dto.setHoraCierre("17:00");
         dto.setImagen("new.png"); // cubre &&: imagen != null y !isEmpty
@@ -258,8 +273,8 @@ class AreaServiceTest {
 
         BloqueoDTO bloqueoDTO = new BloqueoDTO();
         bloqueoDTO.setMotivoBloqueo("Mantenimiento");
-        bloqueoDTO.setFechaInicioBloqueo("2026-03-01");
-        bloqueoDTO.setFechaFinBloqueo("2026-03-31");
+        bloqueoDTO.setFechaInicioBloqueo("2026-05-01");
+        bloqueoDTO.setFechaFinBloqueo("2026-05-31");
 
         when(areaRepository.findById(id)).thenReturn(Optional.of(area));
         when(areaRepository.save(any(Area.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -268,8 +283,8 @@ class AreaServiceTest {
 
         assertEquals("bloqueada", saved.getEstado());
         assertEquals("Mantenimiento", saved.getMotivoBloqueo());
-        assertEquals("2026-03-01", saved.getFechaInicioBloqueo());
-        assertEquals("2026-03-31", saved.getFechaFinBloqueo());
+        assertEquals("2026-05-01", saved.getFechaInicioBloqueo());
+        assertEquals("2026-05-31", saved.getFechaFinBloqueo());
     }
 
     @Test
