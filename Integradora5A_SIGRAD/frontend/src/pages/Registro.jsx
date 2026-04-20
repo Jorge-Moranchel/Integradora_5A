@@ -13,7 +13,7 @@ export default function Registro() {
     const [contrasena, setContrasena] = useState('');
 
     const rolUp = (rol || '').toUpperCase();
-    const esAdministrativo = rolUp === 'ADMINISTRATIVO';que
+    const esAdministrativo = rolUp === 'ADMINISTRATIVO';
     const esCodigoTrabajador = rolUp === 'DOCENTE' || esAdministrativo;
 
     useEffect(() => {
@@ -25,6 +25,7 @@ export default function Registro() {
                 const activos = Array.isArray(data) ? data.filter(r => r?.activo !== false) : [];
                 setRoles(activos);
                 if (!rol && activos.length > 0) setRol(activos[0].nombre || '');
+                // eslint-disable-next-line no-unused-vars
             } catch (e) {
                 // sin alert para no molestar, solo no carga
             }
@@ -76,7 +77,7 @@ export default function Registro() {
             let data = null;
             try {
                 data = await res.json();
-            } catch (_) {
+            } catch (e) {
                 data = null;
             }
 

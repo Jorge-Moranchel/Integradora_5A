@@ -27,6 +27,20 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 
     List<Reserva> findByEstado(String estado);
 
+
+    // cambio para metele el estado
+    @Query("SELECT r FROM Reserva r WHERE " +
+            "(:estado = '' OR r.estado = :estado) AND " +
+            "(:termino = '' OR " +
+            "LOWER(r.usuario.nombre) LIKE LOWER(CONCAT('%', :termino, '%')) OR " +
+            "LOWER(r.area.nombre) LIKE LOWER(CONCAT('%', :termino, '%')) OR " +
+            "LOWER(r.fecha) LIKE LOWER(CONCAT('%', :termino, '%')))")
+    Page<Reserva> buscarConPaginacion(
+            @Param("termino") String termino,
+            @Param("estado") String estado,
+            Pageable pageable);
+
+
     @Query("""
             SELECT r
             FROM Reserva r

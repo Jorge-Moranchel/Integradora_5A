@@ -47,11 +47,14 @@ public class ReservaController {
     public ResponseEntity<Page<Reserva>> listarReservasPaginadas(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "") String termino) {
+            @RequestParam(defaultValue = "") String termino,
+            @RequestParam(defaultValue = "") String estado) {
 
         reservaService.actualizarEstadosVencidos();
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
-        Page<Reserva> reservas = reservaRepository.buscarConPaginacion(termino, pageable);
+
+
+        Page<Reserva> reservas = reservaRepository.buscarConPaginacion(termino, estado, pageable);
         return ResponseEntity.ok(reservas);
     }
 

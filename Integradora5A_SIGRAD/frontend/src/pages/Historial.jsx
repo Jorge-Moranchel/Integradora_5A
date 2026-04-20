@@ -10,6 +10,9 @@ export default function Historial() {
     const [showModal, setShowModal] = useState(false);
     const [reservaAEditar, setReservaAEditar] = useState(null);
 
+
+    const [estadoFiltro, setEstadoFiltro] = useState('');
+
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [totalElements, setTotalElements] = useState(0);
@@ -19,12 +22,14 @@ export default function Historial() {
             fetchReservas();
         }, 300);
         return () => clearTimeout(delayDebounceFn);
-    }, [currentPage, busqueda]);
+    }, [currentPage, busqueda, estadoFiltro]);
+
+
 
     const fetchReservas = async () => {
         setLoading(true);
         try {
-            const response = await fetch(`http://localhost:8080/api/reservas/paginadas?page=${currentPage}&size=10&termino=${busqueda}`);
+            const response = await fetch(`http://localhost:8080/api/reservas/paginadas?page=${currentPage}&size=10&termino=${busqueda}&estado=${estadoFiltro}`);
             if (response.ok) {
                 const data = await response.json();
                 setReservas(data.content);
@@ -41,6 +46,10 @@ export default function Historial() {
     const handleBusquedaChange = (e) => {
         setBusqueda(e.target.value);
         setCurrentPage(0);
+    };
+    const handleEstadoFiltro = (nuevoEstado) => {
+        setEstadoFiltro(nuevoEstado);
+        setCurrentPage(0); //
     };
 
     const handleExport = () => {
@@ -117,7 +126,9 @@ export default function Historial() {
                             }
                         }
                         if (res.status === 404) titulo = 'Sin reservas';
-                    } catch (_) {}
+                    } catch (e) {
+
+                    }
                     Swal.fire(titulo, msg, res.status === 404 ? 'info' : 'error');
                     return;
                 }
@@ -197,22 +208,46 @@ export default function Historial() {
                 </div>
             </div>
 
-            <div className="card border-0 shadow-sm p-4 rounded-4 bg-white">
-                <div className="d-flex gap-3 mb-4">
-                    <div className="input-group" style={{ maxWidth: '450px' }}>
-                        <span className="input-group-text bg-light border-0">
-                            <Search size={18} className="text-muted" />
-                        </span>
-                        <input
-                            type="text"
-                            className="form-control bg-light border-0 shadow-none py-2"
-                            placeholder="Buscar por usuario, rol o cancha..."
-                            value={busqueda}
-                            onChange={handleBusquedaChange}
-                            style={{ borderRadius: '0 12px 12px 0' }}
-                        />
-                    </div>
+            <div className="d-flex gap-3 mb-4 flex-wrap align-items-center">
+                <div className="input-group" style={{ maxWidth: '450px' }}>
+        <span className="input-group-text bg-light border-0">
+            <Search size={18} className="text-muted" />
+        </span>
+                    <input
+                        type="text"
+                        className="form-control bg-light border-0 shadow-none py-2"
+                        placeholder="Buscar por usuario, rol o cancha..."
+                        value={busqueda}
+                        onChange={handleBusquedaChange}
+                        style={{ borderRadius: '0 12px 12px 0' }}
+                    />
                 </div>
+
+                <div className="d-flex gap-2">
+                    {[
+                        { valor: '',            etiqueta: 'Todas'       },
+                        { valor: 'CONFIRMADA',  etiqueta: 'Activas'     },
+                        { valor: 'CANCELADA',   etiqueta: 'Canceladas'  },
+                        { valor: 'COMPLETADA',  etiqueta: 'Completadas' },
+                    ].map(({ valor, etiqueta }) => (
+                        <button
+                            key={valor}
+                            onClick={() => handleEstadoFiltro(valor)}
+                            className={`btn btn-sm fw-bold rounded-3 px-3 ${
+                                estadoFiltro === valor
+                                    ? 'btn-primary shadow-sm'
+                                    : 'btn-light border text-muted'
+                            }`}>
+                            {etiqueta}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Contador de resultados */}
+                <span className="text-muted small ms-auto">
+        {totalElements} resultado{totalElements !== 1 ? 's' : ''}
+    </span>
+            </div>
 
                 {loading ? (
                     <div className="d-flex justify-content-center py-5 my-5">
@@ -332,7 +367,6 @@ export default function Historial() {
                         </p>
                     </div>
                 )}
-            </div>
 
             <ReservaModal
                 show={showModal}

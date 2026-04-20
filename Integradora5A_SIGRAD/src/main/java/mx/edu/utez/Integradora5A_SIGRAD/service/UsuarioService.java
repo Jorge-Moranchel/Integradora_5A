@@ -92,6 +92,8 @@ public class UsuarioService {
             usuario.setCarrera(dto.getCarrera());
         }
         usuario.setEmailInstitucional(email);
+        // aqui validaria la contraseña.
+        validarContrasena(dto.getContrasena());
         usuario.setContrasena(dto.getContrasena());
         usuario.setRol(rol); // Guardamos el rol ya traducido
         usuario.setEstado(dto.getEstado() != null ? dto.getEstado() : true);
@@ -154,5 +156,21 @@ public class UsuarioService {
                 + "Si no solicitaste este registro, ignora este correo.");
 
         mailSender.send(message);
+    }
+
+    // Validar Contraseña
+    private void validarContrasena(String contrasena) {
+        if (contrasena == null || contrasena.isEmpty()) {
+            throw new IllegalArgumentException("La contraseña no puede estar vacía.");
+        }
+        if (contrasena.length() < 8) {
+            throw new IllegalArgumentException("La contraseña debe tener al menos 8 caracteres.");
+        }
+        if (contrasena.contains(" ")) {
+            throw new IllegalArgumentException("La contraseña no puede contener espacios.");
+        }
+        if (!contrasena.matches(".*[A-Za-z].*") || !contrasena.matches(".*[0-9].*")) {
+            throw new IllegalArgumentException("La contraseña debe contener letras y números.");
+        }
     }
 }
