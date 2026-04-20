@@ -65,83 +65,131 @@ export default function UserTable({ users, isLoading, onRefresh, onEdit }) {
                     <th className="ps-4 py-3">Identidad</th>
                     <th className="py-3">Contacto</th>
                     <th className="py-3">Académico & Rol</th>
+                    <th className="py-3 text-center">Cuenta</th>
                     <th className="py-3 text-center">Estado</th>
                     <th className="pe-4 py-3 text-end">Acciones</th>
                 </tr>
                 </thead>
                 <tbody>
-                {users?.map((user) => (
-                    <tr key={user.id} className="border-bottom border-light">
-                        {/* IDENTIDAD: Nombre y Matrícula */}
-                        <td className="ps-4 py-3">
-                            <div className="d-flex align-items-center">
-                                <div className="bg-success text-white rounded-circle d-flex align-items-center justify-content-center fw-bold me-3 shadow-sm"
-                                     style={{ width: '42px', height: '42px', fontSize: '14px' }}>
-                                    {user.nombre?.charAt(0).toUpperCase()}
-                                </div>
-                                <div>
-                                    <div className="fw-bold text-dark mb-0" style={{ fontSize: '0.95rem' }}>{user.nombre}</div>
-                                    <div className="text-muted extra-small">
-                                        <span className="badge bg-secondary bg-opacity-10 text-secondary border-0 px-1" style={{fontSize: '10px'}}>{user.matricula}</span>
+                {users?.map((user) => {
+
+                    const estaValidado = user.validado === true;
+
+                    return (
+                        <tr key={user.id} className="border-bottom border-light">
+                            <td className="ps-4 py-3">
+                                <div className="d-flex align-items-center">
+                                    <div
+                                        className="text-white rounded-circle d-flex align-items-center justify-content-center fw-bold me-3 shadow-sm"
+                                        style={{
+                                            width: '42px', height: '42px', fontSize: '14px',
+                                            backgroundColor: estaValidado ? '#00a854' : '#f59e0b'
+                                        }}
+                                    >
+                                        {user.nombre?.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <div className="fw-bold text-dark mb-0" style={{ fontSize: '0.95rem' }}>{user.nombre}</div>
+                                        <div className="text-muted extra-small">
+                                            <span className="badge bg-secondary bg-opacity-10 text-secondary border-0 px-1" style={{fontSize: '10px'}}>
+                                                {user.matricula}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </td>
+                            </td>
 
-                        {/* CONTACTO: Email e Icono de Teléfono */}
-                        <td className="py-3">
-                            <div className="d-flex flex-column gap-1">
-                                <div className="small text-dark d-flex align-items-center gap-2">
-                                    <Mail size={14} className="text-muted" /> {user.emailInstitucional}
+                            {/* CONTACTO*/}
+                            <td className="py-3">
+                                <div className="d-flex flex-column gap-1">
+                                    <div className="small text-dark d-flex align-items-center gap-2">
+                                        <Mail size={14} className="text-muted" /> {user.emailInstitucional}
+                                    </div>
+                                    <div className="extra-small text-muted d-flex align-items-center gap-2">
+                                        <Phone size={14} /> {user.telefono || 'Sin teléfono'}
+                                    </div>
                                 </div>
-                                <div className="extra-small text-muted d-flex align-items-center gap-2">
-                                    <Phone size={14} /> {user.telefono || 'Sin teléfono'}
-                                </div>
-                            </div>
-                        </td>
+                            </td>
 
-                        {/* ACADÉMICO: Carrera y Rol */}
-                        <td className="py-3">
-                            <div className="d-flex flex-column gap-1">
-                                <div className="small fw-semibold text-dark d-flex align-items-center gap-2">
-                                    <GraduationCap size={16} className="text-success" /> {user.carrera || 'N/A'}
+                            {/* ACADÉMICO: Carrera y Rol */}
+                            <td className="py-3">
+                                <div className="d-flex flex-column gap-1">
+                                    <div className="small fw-semibold text-dark d-flex align-items-center gap-2">
+                                        <GraduationCap size={16} className="text-success" /> {user.carrera || 'N/A'}
+                                    </div>
+                                    <div className="d-flex align-items-center gap-1 text-muted small">
+                                        <Shield size={14} />
+                                        <span className="text-uppercase" style={{fontSize: '10px', fontWeight: '700'}}>{user.rol}</span>
+                                    </div>
                                 </div>
-                                <div className="d-flex align-items-center gap-1 text-muted small">
-                                    <Shield size={14} /> <span className="text-uppercase" style={{fontSize: '10px', fontWeight: '700'}}>{user.rol}</span>
-                                </div>
-                            </div>
-                        </td>
+                            </td>
 
-                        {/* ESTADO: AHORA ES UN SWITCH */}
-                        <td className="py-3 text-center">
-                            <div className="d-flex flex-column align-items-center gap-1">
-                                <div className="form-check form-switch m-0 d-flex justify-content-center p-0">
-                                    <input
-                                        className="form-check-input custom-switch m-0"
-                                        type="checkbox"
-                                        role="switch"
-                                        checked={user.estado !== false}
-                                        onChange={() => handleToggleStatus(user.id, user.nombre, user.estado)}
-                                    />
-                                </div>
-                                <span className={`badge ${user.estado !== false ? 'bg-success bg-opacity-10 text-success' : 'bg-danger bg-opacity-10 text-danger'}`} style={{fontSize: '10px'}}>
-                                    {user.estado !== false ? 'ACTIVO' : 'BLOQUEADO'}
-                                </span>
-                            </div>
-                        </td>
+                            <td className="py-3 text-center">
+                                {estaValidado ? (
+                                    <span
+                                        className="badge d-inline-flex align-items-center gap-1"
+                                        style={{
+                                            backgroundColor: '#d1fae5',
+                                            color: '#065f46',
+                                            fontSize: '11px',
+                                            padding: '5px 10px',
+                                            borderRadius: '20px'
+                                        }}
+                                    >
+                                        <CheckCircle size={12} /> Verificado
+                                    </span>
+                                ) : (
+                                    <span
+                                        className="badge d-inline-flex align-items-center gap-1"
+                                        style={{
+                                            backgroundColor: '#fef3c7',
+                                            color: '#92400e',
+                                            fontSize: '11px',
+                                            padding: '5px 10px',
+                                            borderRadius: '20px'
+                                        }}
+                                    >
+                                        <Clock size={12} /> Pendiente
+                                    </span>
+                                )}
+                            </td>
 
-                        {/* ACCIONES: Solo el botón de Editar */}
-                        <td className="pe-4 py-3 text-end">
-                            <button
-                                className="btn btn-outline-primary btn-sm border shadow-sm"
-                                onClick={() => onEdit(user)}
-                                title="Editar"
-                            >
-                                <Edit size={18} />
-                            </button>
-                        </td>
-                    </tr>
-                ))}
+                            {/* ESTADO: Switch bloqueo/activación*/}
+                            <td className="py-3 text-center">
+                                <div className="d-flex flex-column align-items-center gap-1">
+                                    <div className="form-check form-switch m-0 d-flex justify-content-center p-0">
+                                        <input
+                                            className="form-check-input custom-switch m-0"
+                                            type="checkbox"
+                                            role="switch"
+                                            checked={user.estado !== false}
+                                            onChange={() => handleToggleStatus(user.id, user.nombre, user.estado)}
+                                        />
+                                    </div>
+                                    <span
+                                        className={`badge ${user.estado !== false
+                                            ? 'bg-success bg-opacity-10 text-success'
+                                            : 'bg-danger bg-opacity-10 text-danger'}`}
+                                        style={{fontSize: '10px'}}
+                                    >
+                                        {user.estado !== false ? 'ACTIVO' : 'BLOQUEADO'}
+                                    </span>
+                                </div>
+                            </td>
+
+                            {/* ACCIONES*/}
+                            <td className="pe-4 py-3 text-end">
+                                <button
+                                    className="btn btn-outline-primary btn-sm border shadow-sm"
+                                    onClick={() => onEdit(user)}
+                                    title="Editar"
+                                >
+                                    <Edit size={18} />
+                                </button>
+                            </td>
+                        </tr>
+                    );
+                })}
                 </tbody>
             </table>
         </div>

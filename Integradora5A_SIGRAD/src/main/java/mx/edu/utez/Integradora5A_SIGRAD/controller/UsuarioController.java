@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -25,7 +26,13 @@ public class UsuarioController {
 
     // 1. LISTAR USUARIOS
     @GetMapping("/listar")
-    public ResponseEntity<?> listarUsuarios() {
+    public ResponseEntity<?> listarUsuarios(
+            @RequestParam(name = "validado", required = false) Boolean validado) {
+
+        if (validado != null) {
+            List<Usuario> filtrados = usuarioRepository.findByValidado(validado);
+            return ResponseEntity.ok(filtrados);
+        }
         return ResponseEntity.ok(usuarioRepository.findAll());
     }
 
@@ -75,7 +82,6 @@ public class UsuarioController {
         // Si el estado es null, asumimos que estaba activo (true)
         boolean estadoActual = (user.getEstado() != null) ? user.getEstado() : true;
         user.setEstado(!estadoActual);
-
         usuarioRepository.save(user);
 
         Map<String, Object> response = new HashMap<>();

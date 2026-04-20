@@ -69,7 +69,7 @@ export default function Usuarios() {
 
     const totalActivos    = users.filter(u => u.estado !== false).length;
     const totalBloqueados = users.filter(u => u.estado === false).length;
-    
+
     const totalPendientes = users.filter(u => u.validado !== true).length;
 
     const tabs = [
